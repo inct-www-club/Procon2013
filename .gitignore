@@ -1,0 +1,5 @@
+bin
+.directory
+*~
+*.o
+*.hi
