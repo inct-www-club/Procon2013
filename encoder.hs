@@ -86,10 +86,11 @@ _ReprBits = iso encode decode where
 
 _Lines :: Iso' String [String]
 _Lines = iso lines unlines
-    
+
 main = do
     args <- getArgs
+    let f = interact . over _Lines . view . mapping
     case args of
-         ("encode":_) -> interact $ view $ _Lines . mapping (_Stream . _ReprBits) . from _Lines
-         ("decode":_) -> interact $ view $ _Lines . mapping (from (_Stream . _ReprBits)) . from _Lines
+         ("encode":_) -> f (_Stream . _ReprBits)
+         ("decode":_) -> f (from (_Stream . _ReprBits))
          _ -> putStrLn "Usage: encoder [encode|decode]"
