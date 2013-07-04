@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B727E39D-A12C-4B39-A7D4-05B2622AE7EB}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>procon</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SIV3D)\Inc;$(SIV3D)\Inc\boostMinimal;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SIV3D)\Lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SIV3D)\Inc;$(SIV3D)\Inc\boostMinimal;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SIV3D)\Lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="engine\assets\circle.png" />
+    <Image Include="engine\splash.png" />
+    <Image Include="icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RC.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="engine\config.ini" />
+    <None Include="engine\dll\libmpg123.dll" />
+    <None Include="engine\fonts\M+\LICENSE_E" />
+    <None Include="engine\fonts\M+\LICENSE_J" />
+    <None Include="engine\fonts\README" />
+    <None Include="engine\shaders\d3d11\DeferredMesh.ps" />
+    <None Include="engine\shaders\d3d11\DeferredMesh.vs" />
+    <None Include="engine\shaders\d3d11\DeferredMeshNoTexture.ps" />
+    <None Include="engine\shaders\d3d11\DeferredMeshNoTexture.vs" />
+    <None Include="engine\shaders\d3d11\Finalize.ps" />
+    <None Include="engine\shaders\d3d11\FogLinear.ps" />
+    <None Include="engine\shaders\d3d11\FogSquareExponential.ps" />
+    <None Include="engine\shaders\d3d11\Font2D.ps" />
+    <None Include="engine\shaders\d3d11\ForwardMesh.ps" />
+    <None Include="engine\shaders\d3d11\ForwardMesh.vs" />
+    <None Include="engine\shaders\d3d11\ForwardMeshNoTexture.ps" />
+    <None Include="engine\shaders\d3d11\ForwardMeshNoTexture.vs" />
+    <None Include="engine\shaders\d3d11\LightAccumulation.ps" />
+    <None Include="engine\shaders\d3d11\LightAccumulation.vs" />
+    <None Include="engine\shaders\d3d11\PostFXAA.vs" />
+    <None Include="engine\shaders\d3d11\PostFXAA_None.ps" />
+    <None Include="engine\shaders\d3d11\PostFXAA_Q20.ps" />
+    <None Include="engine\shaders\d3d11\PostFXAA_Q25.ps" />
+    <None Include="engine\shaders\d3d11\PostFXAA_Q39.ps" />
+    <None Include="engine\shaders\d3d11\Shape2D.ps" />
+    <None Include="engine\shaders\d3d11\Shape2D.vs" />
+    <None Include="engine\shaders\d3d11\Sprite2D.ps" />
+    <None Include="engine\shaders\d3d11\Sprite2D.vs" />
+    <None Include="engine\shaders\d3d11\StencilShape2D.ps" />
+    <None Include="engine\shaders\d3d11\StencilShape2D.vs" />
+    <None Include="engine\shaders\d3d11\StencilTexture2D.ps" />
+    <None Include="engine\shaders\d3d11\StencilTexture2D.vs" />
+    <None Include="engine\Siv3DVersion" />
+    <None Include="fbxsdk-2014.0.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="engine\fonts\M+\mplus-1p-black.ttf" />
+    <Font Include="engine\fonts\M+\mplus-1p-bold.ttf" />
+    <Font Include="engine\fonts\M+\mplus-1p-heavy.ttf" />
+    <Font Include="engine\fonts\M+\mplus-1p-light.ttf" />
+    <Font Include="engine\fonts\M+\mplus-1p-medium.ttf" />
+    <Font Include="engine\fonts\M+\mplus-1p-regular.ttf" />
+    <Font Include="engine\fonts\M+\mplus-1p-thin.ttf" />
+    <Font Include="engine\fonts\umeplus-p-gothic.ttf" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
