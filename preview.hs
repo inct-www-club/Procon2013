@@ -1,4 +1,11 @@
 {-# LANGUAGE TemplateHaskell, FlexibleContexts, RankNTypes, LambdaCase #-}
+{-
+
+cabal update
+cabal install free-game lens
+cat /path/to/text | encoder encode | runhaskell preview.hs
+
+-}
 import Graphics.UI.FreeGame
 import Control.Monad
 import Control.Monad.IO.Class
@@ -6,7 +13,6 @@ import System.IO.Unsafe
 import Control.Monad.State
 import System.Random
 import Control.Monad.Trans.Maybe
-import UI.PadKontrol
 import Control.Lens
 import Control.Concurrent.MVar
 
@@ -64,11 +70,6 @@ stateToMVar mv m = do
     (a, s') <- runStateT m s
     liftIO $ putMVar mv s'
     return a
-
-handle mv _ JogCW  = stateToMVar mv $ packetIndex += 1
-handle mv _ JogCCW  = stateToMVar mv $ packetIndex -= 1
-handle mv _ (PadDown p _) = stateToMVar mv $ packetIndex .= fromEnum p
-handle _ _ _ = return ()
 
 main = do
     pkts <- toPackets <$> getLine
