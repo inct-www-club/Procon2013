@@ -57,7 +57,7 @@ renderWorld runner = do
     i <- use packetIndex
     forM_ [0..15] $ \case
         j | i == j -> liftIO $ runner $ padLight (toEnum j) On
-        j -> liftIO $ runner $ padLight (toEnum j) Off/
+        j -> liftIO $ runner $ padLight (toEnum j) Off
     preuse (packets . ix i) >>= maybe (return ()) renderPacket
 
 toPackets :: String -> [Packet]
