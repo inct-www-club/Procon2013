@@ -1,4 +1,11 @@
 {-# LANGUAGE TemplateHaskell, FlexibleContexts, RankNTypes, LambdaCase #-}
+{-
+
+cabal update
+cabal install free-game lens
+cat /path/to/text | encoder encode | runhaskell preview.hs
+
+-}
 import Graphics.UI.FreeGame
 import Control.Monad
 import Control.Monad.IO.Class
@@ -6,7 +13,6 @@ import System.IO.Unsafe
 import Control.Monad.State
 import System.Random
 import Control.Monad.Trans.Maybe
-import UI.PadKontrol
 import Control.Lens
 import Control.Concurrent.MVar
 
@@ -39,25 +45,19 @@ pickHead = get >>= \r -> case r of
 renderPacket :: (Picture2D m, MonadIO m) => Packet -> m ()
 renderPacket pkt = scale 0.7 $ translate (V2 48 48) $ flip evalStateT (view dice pkt) $ do
     runMaybeT $ do
-        forM_ [0..4] $ \c -> do
-            forM_ [0..9] $ \r -> do
+        forM_ [0..4] $ \r -> do
+            forM_ [0..8] $ \c -> do
                 x <- pickHead
-                translate (V2 (c * (96 * 26/16)) (r * 96 * 10 / 16 - 18)) $ scale (10/16) (die x)
-            forM_ [0..5] $ \r -> do
+                translate (V2 (c * 96) (r * 96)) (die x)
+        forM_ [0..1] $ \r -> do
+            forM_ [0..13] $ \c -> do
                 x <- pickHead
-                translate (V2 (c * (96 * 26/16) + 78) (r * 96)) (die x)
-        forM_ [0..9] $ \r -> do
-            x <- pickHead
-            translate (V2 (5 * (96 * 26/16)) (r * 96 * 10 / 16 - 18)) $ scale (10/16) (die x)
-    forM_ (zip [0..] $ view meta pkt) $ \(r, ch) -> do
-        translate (V2 (6 * (96 * 26/16)) (r * 96 * 6 / 16 - 20)) $ scale (6/16) (die ch)
+                translate (V2 (c * 96 * 10 / 16 - 18) (r * 96 * 10 / 16 + 480 - 18)) $ scale (10/16) (die x)
+    return ()
 
-renderWorld :: (MonadState World m, Picture2D m, MonadIO m) => (forall x. PadKontrol x -> IO x) -> m ()
-renderWorld runner = do
+renderWorld :: (MonadState World m, Picture2D m, MonadIO m) => m ()
+renderWorld = do
     i <- use packetIndex
-    forM_ [0..15] $ \case
-        j | i == j -> liftIO $ runner $ padLight (toEnum j) On
-        j -> liftIO $ runner $ padLight (toEnum j) Off/
     preuse (packets . ix i) >>= maybe (return ()) renderPacket
 
 toPackets :: String -> [Packet]
@@ -71,13 +71,8 @@ stateToMVar mv m = do
     liftIO $ putMVar mv s'
     return a
 
-handle mv _ JogCW  = stateToMVar mv $ packetIndex += 1
-handle mv _ JogCCW  = stateToMVar mv $ packetIndex -= 1
-handle mv _ (PadDown p _) = stateToMVar mv $ packetIndex .= fromEnum p
-handle _ _ _ = return ()
-
 main = do
     pkts <- toPackets <$> getLine
     mv <- newMVar $ World { _packetIndex = 0, _packets = pkts }
-    runPadKontrol (handle mv) $ \runner -> runGame def $ do
-        foreverTick $ stateToMVar mv (renderWorld runner)
+    runGame def $ do
+        foreverTick $ stateToMVar mv renderWorld
