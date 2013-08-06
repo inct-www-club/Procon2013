@@ -143,6 +143,7 @@
     <Font Include="engine\fonts\umeplus-p-gothic.ttf" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseInfo.h" />
     <ClInclude Include="GridChoice.h" />
     <ClInclude Include="OpenImage.h" />
   </ItemGroup>

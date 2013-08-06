@@ -18,7 +18,7 @@ public:
 	};
 
 	void ImageOpen(){
-		if(rect.leftPressed){
+		if(rect.leftClicked){
 			texture = Dialog::OpenTexture();
 			tex = true;
 		}
@@ -29,7 +29,7 @@ public:
 		font.draw(L"‰æ‘œ‚ð\nŠJ‚­", 2,2, Palette::Azure);
 		
 		if(tex && texture != NULL)
-			texture.draw(50,0);
+			texture.scale(0.5).draw(50,0);
 	};
 };
 
