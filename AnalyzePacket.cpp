@@ -1,11 +1,14 @@
 ﻿/*
 character code: UTF-8
 
-各メソッドのテスト未実施。
+テスト実施済み。各グリッドの中央部の平均値が算出可能。判定の閾値は要検討 2013/8/11
 各種命名で、単に"roll"と出てきたら、それはサイコロの出目を意味する。
 */
 
 #include<Siv3D.hpp>
+
+//TextWriter writer;
+//String result;
 
 class RGB{
 	public:
@@ -22,9 +25,13 @@ RGB::RGB(){
 }
 
 void RGB::plusColor(Color color){
+
 	r += (unsigned long int)color.r;
 	g += (unsigned long int)color.g;
 	b += (unsigned long int)color.b;
+	//String rrr;
+	//rrr = Format() + L"(" + color.r + L"," + color.g + L"," + color.b + L")\n";
+	//writer.write(rrr);
 }
 
 
@@ -45,7 +52,7 @@ class PacketImage{
 		PacketImage(Image src);
 		int rollofDice[90];
 		void resetRoll(void);
-		RGB colerAve(int xCoordinate, int yCoordinate, int diceWidth, int diceHeight);
+		RGB colerAve(int xCoordinate, int yCoordinate, int diceSize);
 		int decideRoll(RGB average);
 		void analyzePacket(int leftupX, int leftupY, int rightbottomX, int rightbottomY);
 };
@@ -67,28 +74,33 @@ void PacketImage::resetRoll(void){
 	return;
 }
 
-RGB PacketImage::colerAve(int xCoordinate, int yCoordinate, int diceWidth, int diceHeight){
-	
+RGB PacketImage::colerAve(int xCoordinate, int yCoordinate, int diceSize){
+
 	RGB sumColor;
 
-	for(int x=0; x<diceWidth; x++){
+	//result = Format() + "\ndiseSize = " + diceSize + "\nx=" + xCoordinate + " y=" + yCoordinate;
+	const int xLimitPixsel = xCoordinate + diceSize;
+	const int yLimitPixsel = yCoordinate + diceSize;
+	//result = Format() + result + "\nxLim=" + xLimitPixsel + "yLim=" + yLimitPixsel; 
+	for(int x=xCoordinate; x<xLimitPixsel; x++){
 
-		for(int y=0; y<diceHeight; y++){
-			sumColor.plusColor( image.getPixel(x, y) );
+		for(int y=yCoordinate; y<yLimitPixsel; y++){
+			sumColor.plusColor( image.getPixel(y, x) ); //引数の順番に注意！
 		}
 
 	}
 
-	return sumColor.divideColor(diceWidth * diceHeight);
+	return sumColor.divideColor(diceSize * diceSize);
 }
 
 //各色の閾値は要検討。臨機応変に変えられるよう、閾値の設定は別途テキストファイル等で行う予定
 int PacketImage::decideRoll(RGB average){
 
-	if(average.r>140 && average.g>140 && average.b>140){
+	//result = Format() + result + "\nave.r = " + average.r + "\nave.g = " + average.g + "\nave.b = " + average.b;
+	if(average.r<120 && average.g<120 && average.b<120){
 		return 5;
 	}
-	else if(average.r>140){
+	else if(average.r<140){
 		return 1;
 	}
 	else{
@@ -99,28 +111,56 @@ int PacketImage::decideRoll(RGB average){
 }
 
 //TODO:１つのサイコロ全面でなく、中央部のみ測定するように書き直す。配置変更に伴う書き直しをする。
+//上記実装済み2013/8/11
 void PacketImage::analyzePacket(int leftupX, int leftupY, int rightbottomX, int rightbottomY){
 	int packetWidth = rightbottomX - leftupX;
 	int packetHeight = rightbottomY - leftupY;
 
 	double mediumSize = (double)packetHeight / 10.0;
 	double largeSize  = mediumSize * 1.6; 
-	for(double x = -largeSize, double y=0.0, double size, int i=0; i<90; i++){
 
-		if(i%16 == 0){
-			x += largeSize;
-			y=0.0;
-			size = mediumSize;
+	//result = Format() + result + L"\nleftupX = " + leftupX + " mSize = " + mediumSize;
+
+	double diseSize;
+	int diseRankLimit;
+	int diseCountUp = 0;
+	const int diseLineNum = 7;
+	double y=(double)leftupY;
+
+	for(int i=0; i<diseLineNum; i++, y+=diseSize){
+		if(i==0){
+			diseSize = largeSize;
+			diseRankLimit = 9;
 		}
-		else if(i%16 == 10){
-			x += mediumSize;
-			y = 0.0;
-			size = largeSize;
+		else if(i==5){
+			diseSize = mediumSize;
+			diseRankLimit = 14;
 		}
-
-		rollofDice[i] = decideRoll( colerAve((int)x, (int)y, (int)size, (int)size) ); 
-
-		y += size;
-
+		double x = (double)leftupX;
+		for(int j=0; j<diseRankLimit; j++, x+=diseSize, diseCountUp++){
+			int mesureX = (int)( x + diseSize/3.0 ) ;
+			int mesureY = (int)( y + diseSize/3.0 );
+			//result = Format() + result + "\nx=" + mesureX + " y=" +mesureY;
+			rollofDice[diseCountUp] = decideRoll( colerAve(mesureX, mesureY, (int)(diseSize/3.0) ));
+			//break;//debag code
+		}
+		//break;//debag code
 	}
 }
+
+//デバッグ用メイン
+/*
+void Main()
+{
+	writer.open(L"debag.txt");
+	const Font font(7);
+	PacketImage packet;
+	packet.analyzePacket(371, 129, 1563, 945);
+	printf("GO!\n");
+	while(System::Update())
+	{
+
+		font.draw(result);
+	}
+}
+*/
