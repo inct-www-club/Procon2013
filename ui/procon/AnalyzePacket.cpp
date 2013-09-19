@@ -5,18 +5,8 @@ character code: UTF-8
 各種命名で、単に"roll"と出てきたら、それはサイコロの出目を意味する。
 */
 
-#include<Siv3D.hpp>
-
-//TextWriter writer;
-//String result;
-
-class RGB{
-	public:
-		unsigned long int r, g, b;
-		RGB();
-		void plusColor(Color color);
-		RGB divideColor(int a);
-};
+#include"AnalysePacket.h"
+#include<stdio.h>
 
 RGB::RGB(){
 	r=0;
@@ -44,18 +34,8 @@ RGB RGB::divideColor(int a){
 	return *this;
 }
 
-//パケット画像関連の情報はここに詰め込む。変数追加の余地あり。
-class PacketImage{
-	public:
-		Image image;
-		PacketImage(void);
-		PacketImage(Image src);
-		int rollofDice[90];
-		void resetRoll(void);
-		RGB colerAve(int xCoordinate, int yCoordinate, int diceSize);
-		int decideRoll(RGB average);
-		void analyzePacket(int leftupX, int leftupY, int rightbottomX, int rightbottomY);
-};
+
+
 
 PacketImage::PacketImage(void){
 	image = Dialog::OpenImage();
@@ -97,10 +77,10 @@ RGB PacketImage::colerAve(int xCoordinate, int yCoordinate, int diceSize){
 int PacketImage::decideRoll(RGB average){
 
 	//result = Format() + result + "\nave.r = " + average.r + "\nave.g = " + average.g + "\nave.b = " + average.b;
-	if(average.r<120 && average.g<120 && average.b<120){
+	if(average.r>120 && average.g>120 && average.b>120){
 		return 5;
 	}
-	else if(average.r<140){
+	else if(average.r>140){
 		return 1;
 	}
 	else{
@@ -146,6 +126,17 @@ void PacketImage::analyzePacket(int leftupX, int leftupY, int rightbottomX, int 
 		}
 		//break;//debag code
 	}
+
+	resultWrite();
+}
+
+void PacketImage::resultWrite(void){
+	writer = TextWriter(L"result.txt");
+	for(int i=0; i<90; i++){
+		String result = Format() + rollofDice[i];
+		writer.writeln(result);
+	}
+	writer.close();
 }
 
 //デバッグ用メイン
