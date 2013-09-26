@@ -1,5 +1,5 @@
-﻿/*
-character code: UTF-8
+/*
+encoding: UTF-8
 
 テスト実施済み。各グリッドの中央部の平均値が算出可能。判定の閾値は要検討 2013/8/11
 各種命名で、単に"roll"と出てきたら、それはサイコロの出目を意味する。
@@ -143,7 +143,7 @@ void PacketImage::resultWrite(void){
 /*
 void Main()
 {
-	writer.open(L"debag.txt");
+	writer.open(L"debug.txt");
 	const Font font(7);
 	PacketImage packet;
 	packet.analyzePacket(371, 129, 1563, 945);

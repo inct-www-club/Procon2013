@@ -11,7 +11,7 @@ class RGB{
 		RGB divideColor(int a);
 };
 
-//�p�P�b�g�摜�֘A�̏��͂����ɋl�ߍ��ށB�ϐ��ǉ��̗]�n����B
+//パケット画像関連の情報はここに詰め込む。変数追加の余地あり。
 class PacketImage{
 	public:
 		Image image;
