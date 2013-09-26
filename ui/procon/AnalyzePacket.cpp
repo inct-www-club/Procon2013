@@ -5,7 +5,7 @@ encoding: UTF-8
 各種命名で、単に"roll"と出てきたら、それはサイコロの出目を意味する。
 */
 
-#include"AnalysePacket.h"
+#include"AnalyzePacket.h"
 #include<stdio.h>
 
 RGB::RGB(){
@@ -92,20 +92,20 @@ int PacketImage::decideRoll(RGB average){
 
 //TODO:１つのサイコロ全面でなく、中央部のみ測定するように書き直す。配置変更に伴う書き直しをする。
 //上記実装済み2013/8/11
-void PacketImage::analyzePacket(int leftupX, int leftupY, int rightbottomX, int rightbottomY){
-	int packetWidth = rightbottomX - leftupX;
-	int packetHeight = rightbottomY - leftupY;
+void PacketImage::analyzePacket(int lefttopX, int lefttopY, int rightbottomX, int rightbottomY){
+	int packetWidth = rightbottomX - lefttopX;
+	int packetHeight = rightbottomY - lefttopY;
 
 	double mediumSize = (double)packetHeight / 10.0;
 	double largeSize  = mediumSize * 1.6; 
 
-	//result = Format() + result + L"\nleftupX = " + leftupX + " mSize = " + mediumSize;
+	//result = Format() + result + L"\nlefttopX = " + lefttopX + " mSize = " + mediumSize;
 
 	double diseSize;
 	int diseRankLimit;
 	int diseCountUp = 0;
 	const int diseLineNum = 7;
-	double y=(double)leftupY;
+	double y=(double)lefttopY;
 
 	for(int i=0; i<diseLineNum; i++, y+=diseSize){
 		if(i==0){
@@ -116,7 +116,7 @@ void PacketImage::analyzePacket(int leftupX, int leftupY, int rightbottomX, int 
 			diseSize = mediumSize;
 			diseRankLimit = 14;
 		}
-		double x = (double)leftupX;
+		double x = (double)lefttopX;
 		for(int j=0; j<diseRankLimit; j++, x+=diseSize, diseCountUp++){
 			int mesureX = (int)( x + diseSize/3.0 ) ;
 			int mesureY = (int)( y + diseSize/3.0 );
@@ -138,6 +138,7 @@ void PacketImage::resultWrite(void){
 	}
 	writer.close();
 }
+
 
 //デバッグ用メイン
 /*

@@ -1,4 +1,4 @@
-#ifndef GRIDCHOICE_H
+﻿#ifndef GRIDCHOICE_H
 #define GRIDCHOICE_H
 
 #include<Siv3D.hpp>
@@ -69,6 +69,11 @@ public:
 	void ThrowGridPoint(Point *A, Point *B){
 		*A = a;
 		*B = b;
+	};
+
+	bool PointRight(){
+		if(a.x < 0 || a.y < 0 || b.x > WindowWidth || b.y > WindowHeight) return false;
+		else return true;
 	};
 };
 

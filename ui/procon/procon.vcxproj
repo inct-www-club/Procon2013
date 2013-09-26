@@ -144,10 +144,11 @@
     <Font Include="engine\fonts\umeplus-p-gothic.ttf" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AnalysePacket.h" />
+    <ClInclude Include="AnalyzePacket.h" />
     <ClInclude Include="BaseInfo.h" />
     <ClInclude Include="GridChoice.h" />
     <ClInclude Include="OpenImage.h" />
+    <ClInclude Include="Result.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
