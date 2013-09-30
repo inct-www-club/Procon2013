@@ -5,8 +5,9 @@ encoding: UTF-8
 各種命名で、単に"roll"と出てきたら、それはサイコロの出目を意味する。
 */
 
-#include"AnalyzePacket.h"
-#include<stdio.h>
+#include "AnalyzePacket.h"
+#include <stdio.h>
+#include <iostream>
 
 RGB::RGB(){
 	r=0;
@@ -14,28 +15,12 @@ RGB::RGB(){
 	b=0;
 }
 
-void RGB::plusColor(Color color){
-
-	r += (unsigned long int)color.r;
-	g += (unsigned long int)color.g;
-	b += (unsigned long int)color.b;
-	//String rrr;
-	//rrr = Format() + L"(" + color.r + L"," + color.g + L"," + color.b + L")\n";
-	//writer.write(rrr);
+RGB::RGB(char _r, char _g, char _b)
+{
+    r = _r;
+    g = _g;
+    b = _b;
 }
-
-
-RGB RGB::divideColor(int a){
-	r /= (unsigned long int)a;
-	g /= (unsigned long int)a;
-	b /= (unsigned long int)a;
-
-	//この戻り値は可能である。追記2013/7/9
-	return *this;
-}
-
-
-
 
 PacketImage::PacketImage(void){
 	image = Dialog::OpenImage();
@@ -47,40 +32,37 @@ PacketImage::PacketImage(Image src){
 	resetRoll();
 }
 
-void PacketImage::resetRoll(void){
-	for(int i=0; i<90; i++){
-		rollofDice[i]=0;
-	}
-	return;
-}
+RGB PacketImage::colorAverage(int xCoordinate, int yCoordinate, int diceSize){
 
-RGB PacketImage::colerAve(int xCoordinate, int yCoordinate, int diceSize){
+	unsigned long int accumR = 0, accumG = 0, accumB = 0;
 
-	RGB sumColor;
+    const int numPixels = diceSize * diceSize;
 
-	//result = Format() + "\ndiseSize = " + diceSize + "\nx=" + xCoordinate + " y=" + yCoordinate;
-	const int xLimitPixsel = xCoordinate + diceSize;
-	const int yLimitPixsel = yCoordinate + diceSize;
-	//result = Format() + result + "\nxLim=" + xLimitPixsel + "yLim=" + yLimitPixsel; 
-	for(int x=xCoordinate; x<xLimitPixsel; x++){
+	//result = Format() + "\nDiceSize = " + diceSize + "\nx=" + xCoordinate + " y=" + yCoordinate;
+	const int xLimitPixel = xCoordinate + diceSize;
+	const int yLimitPixel = yCoordinate + diceSize;
+	//result = Format() + result + "\nxLim=" + xLimitPixel + "yLim=" + yLimitPixel; 
+	for(int x=xCoordinate; x < xLimitPixel; x++){
 
-		for(int y=yCoordinate; y<yLimitPixsel; y++){
-			sumColor.plusColor( image.getPixel(y, x) ); //引数の順番に注意！
+		for(int y=yCoordinate; y<yLimitPixel; y++){
+            p = image.getPixel(y, x); // Note that getPixel takes (y, x)
+            accumR += p.red;
+            accumG += p.green;
+            accumB += p.blue;
 		}
 
 	}
-
-	return sumColor.divideColor(diceSize * diceSize);
+	return RGB((char)(accumR / numPixels), (char)(accumG / numPixels), (char)(accumB / numPixels));
 }
 
-//各色の閾値は要検討。臨機応変に変えられるよう、閾値の設定は別途テキストファイル等で行う予定
+
 int PacketImage::decideRoll(RGB average){
 
 	//result = Format() + result + "\nave.r = " + average.r + "\nave.g = " + average.g + "\nave.b = " + average.b;
 	if(average.r>120 && average.g>120 && average.b>120){
 		return 5;
 	}
-	else if(average.r>140){
+	else if(average.r>120){
 		return 1;
 	}
 	else{
@@ -90,54 +72,46 @@ int PacketImage::decideRoll(RGB average){
 	return -1;
 }
 
-//TODO:１つのサイコロ全面でなく、中央部のみ測定するように書き直す。配置変更に伴う書き直しをする。
-//上記実装済み2013/8/11
-void PacketImage::analyzePacket(int lefttopX, int lefttopY, int rightbottomX, int rightbottomY){
-	int packetWidth = rightbottomX - lefttopX;
-	int packetHeight = rightbottomY - lefttopY;
+void PacketImage::analyzePacket(const int leftTopX, const int leftTopY, int rightBottomX, int rightBottomY){
+	const int packetWidth = rightBottomX - leftTopX;
+	const int packetHeight = rightBottomY - leftTopY;
 
 	double mediumSize = (double)packetHeight / 10.0;
 	double largeSize  = mediumSize * 1.6; 
 
 	//result = Format() + result + L"\nlefttopX = " + lefttopX + " mSize = " + mediumSize;
 
-	double diseSize;
-	int diseRankLimit;
-	int diseCountUp = 0;
-	const int diseLineNum = 7;
-	double y=(double)lefttopY;
+	double DiceSize;
+	int DiceColumns;
+	const int DiceRows = 7;
+	double y = (double)leftTopY;
 
-	for(int i=0; i<diseLineNum; i++, y+=diseSize){
-		if(i==0){
-			diseSize = largeSize;
-			diseRankLimit = 9;
+    TextWriter writer = TextWriter(L"result.txt");
+
+	for(int i=0; i<DiceRows; i++, y+=DiceSize){
+		if(i < 5){
+			DiceSize = largeSize;
+			DiceColumns = 9;
 		}
-		else if(i==5){
-			diseSize = mediumSize;
-			diseRankLimit = 14;
+		else if(i >= 5){
+			DiceSize = mediumSize;
+			DiceColumns = 14;
 		}
-		double x = (double)lefttopX;
-		for(int j=0; j<diseRankLimit; j++, x+=diseSize, diseCountUp++){
-			int mesureX = (int)( x + diseSize/3.0 ) ;
-			int mesureY = (int)( y + diseSize/3.0 );
-			//result = Format() + result + "\nx=" + mesureX + " y=" +mesureY;
-			rollofDice[diseCountUp] = decideRoll( colerAve(mesureX, mesureY, (int)(diseSize/3.0) ));
-			//break;//debag code
+		double x = (double)leftTopX;
+		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
+			int measureX = (int)( x + DiceSize/3.0 ); // magic number?
+			int measureY = (int)( y + DiceSize/3.0 );
+			//result = Format() + result + "\nx=" + measureX + " y=" +measureY;
+			int r = decideRoll( colorAverage(measureX, measureY, (int)(DiceSize/3.0) ));
+            writer.writeln(Format() + r);
+			//break;//debug code
 		}
-		//break;//debag code
+		//break;//debug code
 	}
+    writer.close();
 
-	resultWrite();
 }
 
-void PacketImage::resultWrite(void){
-	writer = TextWriter(L"result.txt");
-	for(int i=0; i<90; i++){
-		String result = Format() + rollofDice[i];
-		writer.writeln(result);
-	}
-	writer.close();
-}
 
 
 //デバッグ用メイン
