@@ -54,27 +54,26 @@ void PacketImage::calculateCriteria()
     criterion5 = RGB(0, 0, 0);
 }
 
-RGB PacketImage::colorAverage(int xCoordinate, int yCoordinate, int diceSize){
+RGB PacketImage::colorAverage(int tx, int ty, int radius){
 
 	unsigned long int accumR = 0, accumG = 0, accumB = 0;
 
-    const int numPixels = diceSize * diceSize;
+    int n = 0;
 
-	//result = Format() + "\nDiceSize = " + diceSize + "\nx=" + xCoordinate + " y=" + yCoordinate;
-	const int xLimitPixel = xCoordinate + diceSize;
-	const int yLimitPixel = yCoordinate + diceSize;
-	//result = Format() + result + "\nxLim=" + xLimitPixel + "yLim=" + yLimitPixel; 
-	for(int x=xCoordinate; x < xLimitPixel; x++){
-
-		for(int y=yCoordinate; y<yLimitPixel; y++){
-            Color p = image.getPixel(y, x); // Note that getPixel takes (y, x)
-            accumR += p.r;
-            accumG += p.g;
-            accumB += p.b;
+	for(int x= -radius; x < radius; x++){
+		for(int y = -radius; y < radius; y++){
+            if (x * x + y * y < radius * radius)
+            {
+                Color p = image.getPixel(ty + y, tx + x); // Note that getPixel takes (y, x)
+                accumR += p.r;
+                accumG += p.g;
+                accumB += p.b;
+                n++;
+            }
 		}
 
 	}
-	return RGB((char)(accumR / numPixels), (char)(accumG / numPixels), (char)(accumB / numPixels));
+	return RGB((char)(accumR / n), (char)(accumG / n), (char)(accumB / n));
 }
 
 
@@ -116,10 +115,7 @@ std::vector<int> PacketImage::analyzePacket(const int left, const int top, int r
 		}
 		double x = (double)top;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
-			int measureX = (int)( x + DiceSize/3.0 ); // magic number?
-			int measureY = (int)( y + DiceSize/3.0 );
-			//result = Format() + result + "\nx=" + measureX + " y=" +measureY;
-			result.push_back(decideRoll( colorAverage(measureX, measureY, (int)(DiceSize/3.0) )));
+			result.push_back(decideRoll( colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize/3.0))));
 		}
 	}
     return result;
