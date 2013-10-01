@@ -115,7 +115,7 @@ std::vector<std::pair<Coord, int>> PacketImage::analyzePacket(const int left, co
 		}
 		double x = (double)top;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
-			result.push_back(std::pair<Coord, int>(Coord(i, j), (decideRoll( colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize/3.0)))));
+			result.push_back(std::pair<Coord, int>(Coord(x, y), (decideRoll( colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize/3.0))))));
 		}
 	}
     return result;

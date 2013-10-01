@@ -8,13 +8,15 @@ class GridChoice
 {
 public:
 	Rect backrect;
-	Point a,b;
-	Point Ra, Rb;
+	Point a,b; //ツール上での座標
+	Point Ra, Rb; //画像上での座標
 	bool leftPress;
 
 	GridChoice(){
 		backrect = Rect(50,0,WindowWidth,WindowHeight);
 		leftPress = false;
+		a = Point(50,0); b = Point(50,0);
+		Ra = Point(0,0); Rb = Point(0,0);
 	};
 
 	void Position1(){

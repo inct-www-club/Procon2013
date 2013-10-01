@@ -15,7 +15,7 @@ class RGB{
 
 typedef std::pair< int, int>  Coord;
 
-//パケット画像関連の情報はここに詰め込む。変数追加の余地あり。
+//パケチE��画像関連の惁E��はここに詰め込む。変数追加の余地あり、E
 class PacketImage{
 	public:
 		Image image;
