@@ -1,8 +1,7 @@
 /*
 encoding: UTF-8
 
-テスト実施済み。各グリッドの中央部の平均値が算出可能。判定の閾値は要検討 2013/8/11
-各種命名で、単に"roll"と出てきたら、それはサイコロの出目を意味する。
+各グリッドの中央部の平均値が算出可能。
 */
 
 #include "AnalyzePacket.h"
@@ -68,10 +67,10 @@ RGB PacketImage::colorAverage(int xCoordinate, int yCoordinate, int diceSize){
 	for(int x=xCoordinate; x < xLimitPixel; x++){
 
 		for(int y=yCoordinate; y<yLimitPixel; y++){
-            p = image.getPixel(y, x); // Note that getPixel takes (y, x)
-            accumR += p.red;
-            accumG += p.green;
-            accumB += p.blue;
+            Color p = image.getPixel(y, x); // Note that getPixel takes (y, x)
+            accumR += p.r;
+            accumG += p.g;
+            accumB += p.b;
 		}
 
 	}
@@ -121,10 +120,7 @@ std::vector<int> PacketImage::analyzePacket(const int left, const int top, int r
 			int measureY = (int)( y + DiceSize/3.0 );
 			//result = Format() + result + "\nx=" + measureX + " y=" +measureY;
 			result.push_back(decideRoll( colorAverage(measureX, measureY, (int)(DiceSize/3.0) )));
-            
-			//break;//debug code
 		}
-		//break;//debug code
 	}
     return result;
 
@@ -132,7 +128,7 @@ std::vector<int> PacketImage::analyzePacket(const int left, const int top, int r
 
 
 
-//デバッグ用メイン
+//デバッグ用メイン (out of date?)
 /*
 void Main()
 {
