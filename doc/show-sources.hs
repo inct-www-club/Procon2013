@@ -7,6 +7,7 @@ import System.FilePath
 import System.FilePath.Lens
 import System.Directory
 import qualified Data.Map as Map
+import qualified Data.ByteString.Char8 as BS
 
 ------------------------------------------------------
 
@@ -26,7 +27,7 @@ addDirectory exts dir = do
         let ext = view extension path
         when (ext `elem` exts) $ addFile $ dir </> path
 
-languageByExtension = Map.fromList [(".hs", "haskell"), (".h", "cpp"), (".cpp", "cpp")]
+languageByExtension = Map.fromList [(".hs", "haskell"), (".h", "cpp"), (".cpp", "cpp"), (".txt", "")]
 
 showAll m = do
     paths <- liftM (flip appEndo []) $ execWriterT m
@@ -35,5 +36,5 @@ showAll m = do
         putStrLn $ "## " ++ view filename path
         putStrLn ""
         putStrLn $ "```" ++ languageByExtension Map.! view extension path
-        readFile path >>= putStrLn
+        BS.readFile path >>= BS.putStrLn
         putStrLn "```\n"

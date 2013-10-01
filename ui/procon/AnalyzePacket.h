@@ -13,7 +13,9 @@ class RGB{
         float Distance(RGB x);
 };
 
-//ƒpƒPƒbƒg‰æ‘œŠÖ˜A‚Ìî•ñ‚Í‚±‚±‚É‹l‚ß‚ŞB•Ï”’Ç‰Á‚Ì—]’n‚ ‚èB
+typedef std::pair< int, int>  Coord;
+
+//ãƒ‘ã‚±ãƒƒãƒˆç”»åƒé–¢é€£ã®æƒ…å ±ã¯ã“ã“ã«è©°ã‚è¾¼ã‚€ã€‚å¤‰æ•°è¿½åŠ ã®ä½™åœ°ã‚ã‚Šã€‚
 class PacketImage{
 	public:
 		Image image;
@@ -27,7 +29,7 @@ class PacketImage{
         void calculateCriteria();
 		RGB colorAverage(int xCoordinate, int yCoordinate, int diceSize);
 		int decideRoll(RGB average);
-		std::vector<int> analyzePacket(const int left, const int top, const int right, const int bottom);
+		std::vector<std::pair<Coord, int>> analyzePacket(const int left, const int top, const int right, const int bottom);
 };
 
 #endif

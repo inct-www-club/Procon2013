@@ -89,7 +89,7 @@ int PacketImage::decideRoll(RGB average){
 	}
 }
 
-std::vector<int> PacketImage::analyzePacket(const int left, const int top, int right, int bottom){
+std::vector<std::pair<Coord, int>> PacketImage::analyzePacket(const int left, const int top, int right, int bottom){
 	const int packetWidth = right - left;
 	const int packetHeight = bottom - top;
 
@@ -102,7 +102,7 @@ std::vector<int> PacketImage::analyzePacket(const int left, const int top, int r
 	int DiceColumns;
 	const int DiceRows = 7;
 	double y = (double)top;
-    std::vector<int> result(90);
+    std::vector<std::pair<Coord, int>> result(90);
 
 	for(int i=0; i<DiceRows; i++, y+=DiceSize){
 		if(i < 5){
@@ -115,7 +115,7 @@ std::vector<int> PacketImage::analyzePacket(const int left, const int top, int r
 		}
 		double x = (double)top;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
-			result.push_back(decideRoll( colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize/3.0))));
+			result.push_back(std::pair<Coord, int>(Coord(i, j), (decideRoll( colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize/3.0)))));
 		}
 	}
     return result;
