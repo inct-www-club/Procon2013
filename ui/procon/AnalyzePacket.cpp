@@ -22,14 +22,37 @@ RGB::RGB(char _r, char _g, char _b)
     b = _b;
 }
 
+float RGB::Brightness()
+{
+    return ((float)r + (float)g + (float)b) / 256 / 3;
+}
+
+float RGB::Dot(RGB x)
+{
+    return ((float)r * (float)x.r + (float)g * (float)x.g + (float)b * (float)x.b) / 256;
+}
+float RGB::Distance(RGB x)
+{
+    float dr = (float)(r - x.r), dg = (float)(g - x.g), db = (float)(b - x.b);
+    return dr * dr + dg * dg + db * db;
+}
+
 PacketImage::PacketImage(void){
 	image = Dialog::OpenImage();
-	resetRoll();
+    calculateCriteria();
 }
 
 PacketImage::PacketImage(Image src){
 	image = src;
-	resetRoll();
+    calculateCriteria();
+}
+
+void PacketImage::calculateCriteria()
+{
+    // TODO: Actually calculate
+    criterion1 = RGB(255, 0, 0);
+    criterion2 = RGB(255, 255, 255);
+    criterion5 = RGB(0, 0, 0);
 }
 
 RGB PacketImage::colorAverage(int xCoordinate, int yCoordinate, int diceSize){
@@ -58,18 +81,14 @@ RGB PacketImage::colorAverage(int xCoordinate, int yCoordinate, int diceSize){
 
 int PacketImage::decideRoll(RGB average){
 
+    float d1 = average.Distance(criterion1), d2 = average.Distance(criterion2), d5 = average.Distance(criterion5);
 	//result = Format() + result + "\nave.r = " + average.r + "\nave.g = " + average.g + "\nave.b = " + average.b;
-	if(average.r>120 && average.g>120 && average.b>120){
-		return 5;
+    if(d1 < d2){
+        return (d5 < d1) ? 5 : 1;
 	}
-	else if(average.r>120){
-		return 1;
+	else {
+        return (d5 < d2) ? 5 : 2;
 	}
-	else{
-		return 2;
-	}
-
-	return -1;
 }
 
 std::vector<int> PacketImage::analyzePacket(const int left, const int top, int right, int bottom){
