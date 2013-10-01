@@ -20,7 +20,7 @@ class PacketImage{
 		void resetRoll(void);
 		RGB colorAverage(int xCoordinate, int yCoordinate, int diceSize);
 		int decideRoll(RGB average);
-		void analyzePacket(int leftupX, int leftupY, int rightbottomX, int rightbottomY);
+		std::vector<int> analyzePacket(const int left, const int top, const int right, const int bottom);
 };
 
 #endif

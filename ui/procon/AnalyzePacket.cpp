@@ -72,9 +72,9 @@ int PacketImage::decideRoll(RGB average){
 	return -1;
 }
 
-void PacketImage::analyzePacket(const int leftTopX, const int leftTopY, int rightBottomX, int rightBottomY){
-	const int packetWidth = rightBottomX - leftTopX;
-	const int packetHeight = rightBottomY - leftTopY;
+std::vector<int> PacketImage::analyzePacket(const int left, const int top, int right, int bottom){
+	const int packetWidth = right - left;
+	const int packetHeight = bottom - top;
 
 	double mediumSize = (double)packetHeight / 10.0;
 	double largeSize  = mediumSize * 1.6; 
@@ -84,9 +84,8 @@ void PacketImage::analyzePacket(const int leftTopX, const int leftTopY, int righ
 	double DiceSize;
 	int DiceColumns;
 	const int DiceRows = 7;
-	double y = (double)leftTopY;
-
-    TextWriter writer = TextWriter(L"result.txt");
+	double y = (double)top;
+    std::vector<int> result(90);
 
 	for(int i=0; i<DiceRows; i++, y+=DiceSize){
 		if(i < 5){
@@ -97,18 +96,18 @@ void PacketImage::analyzePacket(const int leftTopX, const int leftTopY, int righ
 			DiceSize = mediumSize;
 			DiceColumns = 14;
 		}
-		double x = (double)leftTopX;
+		double x = (double)top;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
 			int measureX = (int)( x + DiceSize/3.0 ); // magic number?
 			int measureY = (int)( y + DiceSize/3.0 );
 			//result = Format() + result + "\nx=" + measureX + " y=" +measureY;
-			int r = decideRoll( colorAverage(measureX, measureY, (int)(DiceSize/3.0) ));
-            writer.writeln(Format() + r);
+			result.push_back(decideRoll( colorAverage(measureX, measureY, (int)(DiceSize/3.0) )));
+            
 			//break;//debug code
 		}
 		//break;//debug code
 	}
-    writer.close();
+    return result;
 
 }
 

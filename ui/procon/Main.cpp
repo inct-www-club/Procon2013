@@ -22,9 +22,13 @@ void Main()
 	{
 		if(appOpenImage.ButtonClicke() == true && appGridChoice.PointRight()){
 			PacketImage packet = PacketImage(appOpenImage.image);
-			packet.analyzePacket(appGridChoice.Ra.x, appGridChoice.Ra.y, appGridChoice.Rb.x, appGridChoice.Rb.y);
-			appResult.Result_Set(packet.rollofDice);
-		}
+            std::vector<int> result = packet.analyzePacket(appGridChoice.Ra.x, appGridChoice.Ra.y, appGridChoice.Rb.x, appGridChoice.Rb.y);
+            
+            int raw[90];
+            for (int i = 0; i < 90; i++) raw[i] = result[i];
+            appResult.Result_Set(raw);
+		
+        }
 
 		appGridChoice.Position2();
 
