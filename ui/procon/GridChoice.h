@@ -64,8 +64,8 @@ public:
 		String CooaS = Format() + L"(" + Ra.x + "," + Ra.y + L")";
 		String CoobS = Format() + L"(" + Rb.x + "," + Rb.y + L")";
 		
-		CooaF.draw(CooaS, 52, WindowHeight-40, Palette::Red);
-		CooaF.draw(CoobS, 52, WindowHeight-20, Palette::Blue);
+		CooaF.draw(CooaS, 2, WindowHeight-40, Palette::Red);
+		CooaF.draw(CoobS, 2, WindowHeight-20, Palette::Blue);
 	};
 
 	void ThrowGridPoint(Point *A, Point *B){

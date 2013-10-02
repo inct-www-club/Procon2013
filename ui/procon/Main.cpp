@@ -36,7 +36,6 @@ void Main()
 
 		//appResult.DrawPacket();
 		//appResult.DrawPacket2();
-		//appResult.TestDraw();
 		
 		appGridChoice.DrawGrid();
 	}

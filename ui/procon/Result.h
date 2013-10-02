@@ -14,11 +14,12 @@ public:
 	Die(){
 		Roll = 0;
 		ChangedRoll = 0;
-		LeftTop = Point(0,0);
-		RightBottom = Point(0,0);
+		LeftTop = Point(50,0);
+		RightBottom = Point(50,0);
+		font = Font(12);
 	};
 
-	Die(int roll, Point lefttop, Point rightbottom){
+	void SetDie(int roll, Point lefttop, Point rightbottom){
 		Roll = roll;
 		ChangedRoll = Roll;
 		LeftTop = lefttop;
@@ -38,11 +39,13 @@ public:
 		for(int i = 0; i < 5; i++){
 			for(int j = 0; j < 9; j++){
 				BigDice[i][j] = Die();
+				BigDice[i][j].SetDie(i*9+j, Point(50+j*26,i*26), Point(0,0));
 			}
 		}
 		for(int i = 0; i < 2; i++){
 			for(int j = 0; j < 14; j++){
 				SmallDice[i][j] = Die();
+				SmallDice[i][j].SetDie(i*14+j+45, Point(50+j*26,(i+5)*26), Point(0,0));
 			}
 		}
 	};
@@ -50,12 +53,12 @@ public:
 	void Result_Set(std::vector<std::pair<Coord, int>> result){
 		for(int i = 0; i < 5; i++){
 			for(int j = 0; j < 9; j++){
-				Die(result[i*9 + j].second, Point(result[i*9 + j].first.first, result[i*9 + j].first.second), Point(0,0)); //位置設定は座標情報が無いため適当
+				BigDice[i*9][j].SetDie(result[i*9 + j].second, Point(50+j*26,i*26)/*Point(result[i*9 + j].first.first, result[i*9 + j].first.second)*/, Point(0,0));
 			}
 		}
 		for(int i = 0; i < 2; i++){
 			for(int j = 0; j < 14; j++){
-				Die(result[i*9 + j].second, Point(result[i*9 + j].first.first, result[i*9 + j].first.second), Point(0,0));
+				SmallDice[i*14][j].SetDie(result[i*14 + j + 45].second, Point(50+j*26,(i+5)*26)/*Point(result[i*14 + j + 45].first.first, result[i*14 + j + 45].first.second)*/, Point(0,0));
 			}
 		}
 	};
@@ -73,28 +76,23 @@ public:
 		}
 	};
 
+	// デバッグ用
 	void DrawPacket2(){
 		int counter = 0;
 		for(int i = 0; i < 5; i++){
 			for(int j = 0; j < 9; j++){
-				BigDice[i][j].font = Font(12);
-				BigDice[i][j].font.draw(Format()+BigDice[i][j].Roll, 50+counter*10, 0, Palette::Green);
+				BigDice[i][j].font.draw(Format()+BigDice[i*9][j].ChangedRoll, 50+counter*10, 0, Palette::Green);
 				counter++;
 			}
 		}
 		for(int i = 0; i < 2; i++){
 			for(int j = 0; j < 14; j++){
-				SmallDice[i][j].font = Font(12);
-				SmallDice[i][j].font.draw(Format()+SmallDice[i][j].Roll, 50+counter*10, 0, Palette::Green);
+				SmallDice[i][j].font.draw(Format()+SmallDice[i*14][j].ChangedRoll, 50+counter*10, 0, Palette::Green);
 				counter++;
 			}
 		}
 	};
 
-	void TestDraw(){
-		Rect(100,100,200,200).draw(Palette::Brown);
-		Font().draw(L"Hello", 100,100, Palette::Green); 
-	};
 
 };
 
