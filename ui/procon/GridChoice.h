@@ -74,7 +74,8 @@ public:
 	};
 
 	bool PointRight(){
-		if(a.x < 0 || a.y < 0 || b.x > WindowWidth || b.y > WindowHeight) return false;
+		if(a.x < 0 || a.y < 0 || b.x > WindowWidth || b.y > WindowHeight || 
+			(a == b) || a.x > b.x || a.y > b.y) return false;
 		else return true;
 	};
 };

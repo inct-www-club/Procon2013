@@ -34,8 +34,7 @@ void Main()
 		appOpenImage.Draw();
 		appGridChoice.DrawGridCoordinate();
 
-		//appResult.DrawPacket();
-		//appResult.DrawPacket2();
+		appResult.DrawPacket();
 		
 		appGridChoice.DrawGrid();
 	}

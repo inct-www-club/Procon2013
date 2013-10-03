@@ -53,12 +53,14 @@ public:
 	void Result_Set(std::vector<std::pair<Coord, int>> result){
 		for(int i = 0; i < 5; i++){
 			for(int j = 0; j < 9; j++){
-				BigDice[i*9][j].SetDie(result[i*9 + j].second, Point(50+j*26,i*26)/*Point(result[i*9 + j].first.first, result[i*9 + j].first.second)*/, Point(0,0));
+				//BigDice[i][j].SetDie(result[i*9 + j].second, Point(result[i*9 + j].first.first, result[i*9 + j].first.second), Point(0,0));
+				BigDice[i][j].SetDie(result[i*9 + j].second, Point(50+j*26,i*26), Point(0,0));
 			}
 		}
 		for(int i = 0; i < 2; i++){
 			for(int j = 0; j < 14; j++){
-				SmallDice[i*14][j].SetDie(result[i*14 + j + 45].second, Point(50+j*26,(i+5)*26)/*Point(result[i*14 + j + 45].first.first, result[i*14 + j + 45].first.second)*/, Point(0,0));
+				//SmallDice[i][j].SetDie(result[i*14 + j + 45].second, Point(result[i*14 + j + 45].first.first, result[i*14 + j + 45].first.second), Point(0,0));
+				SmallDice[i][j].SetDie(result[i*14 + j + 45].second, Point(50+j*26,(i+5)*26), Point(0,0));
 			}
 		}
 	};
@@ -81,13 +83,13 @@ public:
 		int counter = 0;
 		for(int i = 0; i < 5; i++){
 			for(int j = 0; j < 9; j++){
-				BigDice[i][j].font.draw(Format()+BigDice[i*9][j].ChangedRoll, 50+counter*10, 0, Palette::Green);
+				BigDice[i][j].font.draw(Format()+BigDice[i*9][j].ChangedRoll, 50+counter*20, 0, Palette::Green);
 				counter++;
 			}
 		}
 		for(int i = 0; i < 2; i++){
 			for(int j = 0; j < 14; j++){
-				SmallDice[i][j].font.draw(Format()+SmallDice[i*14][j].ChangedRoll, 50+counter*10, 0, Palette::Green);
+				SmallDice[i][j].font.draw(Format()+SmallDice[i*14][j].ChangedRoll, 50+counter*20, 0, Palette::Green);
 				counter++;
 			}
 		}
