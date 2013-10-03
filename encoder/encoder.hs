@@ -4,20 +4,25 @@ import Control.Lens
 import Control.Monad.State
 import System.Environment
 
+-- | The list of letters
 letters :: [Char]
 letters = concat $ f <$> [2..7] <*> [0..15] where
     f x y = [toEnum v | let v = x * 16 + y, v `notElem` [0x20, 0x5B, 0x5C, 0x5D, 0x5E, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F]]
 
+-- | Convert a character to an integer
 _Letter :: Iso' Char Int
 _Letter = iso (\x -> elemIndex x letters ^?! _Just) (letters !!)
 
-data Bit = Black | Red | White deriving (Show, Eq, Ord, Enum)
+-- | The type of dice
+data Die = D5 | D1 | D2 deriving (Show, Eq, Ord, Enum)
 
-_Stream :: Iso' [Char] [Bit]
+-- | Convert a string to dice
+_Stream :: Iso' [Char] [Die]
 _Stream = encodeString . encodeBlocks
 
 data Block = Triad Int Int Int | Pair Int Int | Unit Int deriving (Show, Eq, Ord)
 
+-- | Convert a string to blocks
 encodeString :: Iso' [Char] [Block]
 encodeString = iso toBlocks fromBlocks where
     toBlocks :: [Char] -> [Block]
@@ -32,7 +37,8 @@ encodeString = iso toBlocks fromBlocks where
     fromBlocks (Triad x y z : bs) = view (from _Letter) x : view (from _Letter) y : view (from _Letter) z : fromBlocks bs
     fromBlocks [] = []
 
-encodeBlocks :: Iso' [Block] [Bit]
+-- | Convert blocks to dice
+encodeBlocks :: Iso' [Block] [Die]
 encodeBlocks = iso encode decode where
     encode (b : bs) = case b ^? encodeBlock of
         Just r -> r ++ encode bs
@@ -43,44 +49,47 @@ encodeBlocks = iso encode decode where
         | length bs == 0 = []
         | otherwise = error "extra bits"
 
+-- | Prepend an element to blocks
 consBlock :: Int -> [Block] -> [Block]
 consBlock x [] = [Unit x]
 consBlock x (Unit y:ts) = Pair x y : ts
 consBlock x (Pair y z:zs) = Triad x y z : zs
 consBlock x (Triad y z w : ws) = Triad x y z : consBlock w ws
 
+-- | Remove triads in the head
 recons (Triad x y z : xs) = Pair x y : consBlock z xs
 recons xs = xs
 
-encodeBlock :: Prism' Block [Bit]
+-- | Convert blocks to dice
+encodeBlock :: Prism' Block [Die]
 encodeBlock = prism' decode encode where
-    encode (Triad x y z) = (x * 86 ^ 2 + y * 86 + z + 86 ^ 2 - 1) ^? _Int_Bit
-    encode (Pair x y) = ((x + 1) * 86 + y) ^? _Int_Bit
-    encode (Unit x) = x ^? _Int_Bit
+    encode (Triad x y z) = (x * 86 ^ 2 + y * 86 + z + 86 ^ 2 - 1) ^? _Int_Die
+    encode (Pair x y) = ((x + 1) * 86 + y) ^? _Int_Die
+    encode (Unit x) = x ^? _Int_Die
     decode bs
         | n < 86 = Unit n
         | otherwise = Pair (div n 86 - 1) (mod n 86)
         where
-            n = review _Int_Bit bs
+            n = review _Int_Die bs
 
-_Int_Bit :: Prism' Int [Bit]
-_Int_Bit = prism' (foldr (\x r -> r * 3 + fromEnum x) 0) (enc 9) where
+-- | Convert an integer to dice
+_Int_Die :: Prism' Int [Die]
+_Int_Die = prism' (foldr (\x r -> r * 3 + fromEnum x) 0) (enc 9) where
     enc m n
         | m < 0 = Nothing
-        | n == 0 = Just (replicate m Black)
+        | n == 0 = Just (replicate m D5)
         | otherwise = (toEnum (mod n 3):) <$> enc (m - 1) (div n 3)
 
-_ReprBits :: Iso' [Bit] String
-_ReprBits = iso encode decode where
-    encode (Red : xs) = 'R' : encode xs
-    encode (Black : xs) = 'B' : encode xs
-    encode (White : xs) = 'W' : encode xs
-    encode [] = []
-    decode ('R' : xs) = Red : decode xs
-    decode ('W' : xs) = White : decode xs
-    decode ('B' : xs) = Black : decode xs
-    decode (_ : xs) = error "Illegal character: expecting R, W, B"
-    decode [] = []
+-- | Representation of dice
+_ReprDie :: Iso' Die Char
+_ReprDie = iso encode decode where
+    encode D1 = '1'
+    encode D5 = '2'
+    encode D2 = '5'
+    decode '1' = D1
+    decode '2' = D2
+    decode '5' = D5
+    decode _ = error "Illegal character: expecting 1, 2, 5"
 
 _Lines :: Iso' String [String]
 _Lines = iso lines unlines
@@ -89,6 +98,6 @@ main = do
     args <- getArgs
     let f = interact . over _Lines . view . mapping
     case args of
-         ("encode":_) -> f (_Stream . _ReprBits)
-         ("decode":_) -> f (from (_Stream . _ReprBits))
+         ("encode":_) -> f (_Stream . mapping _ReprDie)
+         ("decode":_) -> f (from (_Stream . mapping _ReprDie))
          _ -> putStrLn "Usage: encoder [encode|decode]"
