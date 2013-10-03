@@ -1,4 +1,4 @@
-#ifndef SideButton_H
+ï»¿#ifndef SideButton_H
 #define SideButton_H
 
 #include<Siv3D.hpp>
@@ -41,16 +41,16 @@ public:
 
 	void Draw(GridChoice choice){
 		OpenButton.draw(Palette::Brown);
-		font.draw(L"‰æ‘œ‚ğ\nŠJ‚­", 2,2, Palette::Azure);
+		font.draw(L"ç”»åƒã‚’\né–‹ã", 2,2, Palette::Azure);
 		AnalyzeButton.draw(Palette::Red);
-		font.draw(L"‰æ‘œ‚ğ\n‰ğÍ", 2, 52, Palette::Azure);
+		font.draw(L"ç”»åƒã‚’\nè§£æ", 2, 52, Palette::Azure);
 		
 		if(choice.ChoiceMode == 0){
 			ChoiceButton.draw(Palette::Blueviolet);
-			font.draw(L"F‚ğ\n‘I‘ğ", 2, 102, Palette::Azure);
+			font.draw(L"è‰²ã‚’\né¸æŠ", 2, 102, Palette::Azure);
 		}else if(choice.ChoiceMode == 1){
 			ChoiceButton.draw(Palette::Beige);
-			font.draw(L"”ÍˆÍ‚ğ\n‘I‘ğ", 2, 102, Palette::Azure);
+			font.draw(L"ç¯„å›²ã‚’\né¸æŠ", 2, 102, Palette::Azure);
 		}
 	};
 };
