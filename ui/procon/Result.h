@@ -39,30 +39,29 @@ public:
 		for(int i = 0; i < 5; i++){
 			for(int j = 0; j < 9; j++){
 				BigDice[i][j] = Die();
-				BigDice[i][j].SetDie(i*9+j, Point(50+j*26,i*26), Point(0,0));
 			}
 		}
 		for(int i = 0; i < 2; i++){
 			for(int j = 0; j < 14; j++){
 				SmallDice[i][j] = Die();
-				SmallDice[i][j].SetDie(i*14+j+45, Point(50+j*26,(i+5)*26), Point(0,0));
 			}
 		}
 	};
 
-	void Result_Set(std::vector<std::pair<Coord, int>> result){
+	void Result_Set(std::vector<std::pair<Coord, int>> result, Point PacketLeftTop){
 		for(int i = 0; i < 5; i++){
 			for(int j = 0; j < 9; j++){
-				//BigDice[i][j].SetDie(result[i*9 + j].second, Point(result[i*9 + j].first.first, result[i*9 + j].first.second), Point(0,0));
-				BigDice[i][j].SetDie(result[i*9 + j].second, Point(50+j*26,i*26), Point(0,0));
+				BigDice[i][j].SetDie(result[i*9 + j].second, 
+					Point(result[i*9 + j].first.first/2 + PacketLeftTop.x -50, result[i*9 + j].first.second/2), Point(0,0));
 			}
 		}
 		for(int i = 0; i < 2; i++){
 			for(int j = 0; j < 14; j++){
-				//SmallDice[i][j].SetDie(result[i*14 + j + 45].second, Point(result[i*14 + j + 45].first.first, result[i*14 + j + 45].first.second), Point(0,0));
-				SmallDice[i][j].SetDie(result[i*14 + j + 45].second, Point(50+j*26,(i+5)*26), Point(0,0));
+				SmallDice[i][j].SetDie(result[i*14 + j + 45].second, 
+					Point(result[i*14 + j + 45].first.first/2 + PacketLeftTop.x -50, result[i*14 + j + 45].first.second/2), Point(0,0));
 			}
 		}
+
 	};
 
 	void DrawPacket(){

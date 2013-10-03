@@ -102,7 +102,7 @@ std::vector<std::pair<Coord, int>> PacketImage::analyzePacket(const int left, co
 	int DiceColumns;
 	const int DiceRows = 7;
 	double y = (double)top;
-    std::vector<std::pair<Coord, int>> result(90);
+    std::vector<std::pair<Coord, int>> result;
 
 	for(int i=0; i<DiceRows; i++, y+=DiceSize){
 		if(i < 5){
