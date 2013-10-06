@@ -32,7 +32,14 @@ void Main()
 		
         }
 
-		appGridChoice.Position2();
+		if(appGridChoice.ChoiceMode == 0){
+			appGridChoice.Position2();
+		}
+		else if(appGridChoice.ChoiceMode == 1){
+			appGridChoice.SetChoiceColor();
+			appGridChoice.ColorPosition();
+		}
+
 		appOpenImage.ClickedOpenImage(appSideButton);
 		appGridChoice.ChangeChoiceMode(appSideButton.ChoiceButtonClick());
 
@@ -41,6 +48,7 @@ void Main()
 		appSideButton.Draw(appGridChoice);
 
 		appGridChoice.DrawGridCoordinate();
+		appGridChoice.DrawColorGrid();
 
 		appResult.DrawPacket();
 		

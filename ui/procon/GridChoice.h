@@ -14,7 +14,7 @@ public:
 	Point a,b; //画像選択のツール上での座標
 	Point Ra, Rb; //画像選択の画像上での座標
 
-	int ChoiceColor; //選択する色
+	int ChoiceColor; //選択する色 <<0:r 1:w 2:b>>
 	Point ColorGrid[3]; //色選択のツール上での座標 <<0:r 1:w 2:b>>
 	Point RColorGrid[3]; //色選択の画像上での座標 
 
@@ -34,8 +34,8 @@ public:
 
 	void ChangeChoiceMode(bool clicked){
 		if(clicked){
-			if(ChoiceMode == 0) ChoiceMode = 0;
-			else ChoiceMode = 1;
+			if(ChoiceMode == 0) ChoiceMode = 1;
+			else ChoiceMode = 0;
 		}
 	};
 
@@ -80,7 +80,7 @@ public:
 	};
 
 	void ColorPosition(){
-		if(backrect.leftClicked){
+		if(backrect.leftPressed){
 			ColorGrid[ChoiceColor] = Mouse::Pos();
 			RColorGrid[ChoiceColor].x = (ColorGrid[ChoiceColor].x-50)*2;
 			RColorGrid[ChoiceColor].y = ColorGrid[ChoiceColor].y*2;
@@ -99,14 +99,14 @@ public:
 	};
 
 	void DrawColorGrid(){
-		Circle(ColorGrid[0], 7).draw(Palette::Green);
-		Circle(ColorGrid[0], 5).draw(Palette::Red);
+		Circle(ColorGrid[0], 8).draw(Palette::Green);
+		Circle(ColorGrid[0], 6).draw(Palette::Red);
 
-		Circle(ColorGrid[1], 7).draw(Palette::Green);
-		Circle(ColorGrid[1], 5).draw(Palette::White);
+		Circle(ColorGrid[1], 8).draw(Palette::Green);
+		Circle(ColorGrid[1], 6).draw(Palette::White);
 		
-		Circle(ColorGrid[1], 7).draw(Palette::Green);
-		Circle(ColorGrid[2], 5).draw(Palette::Black);
+		Circle(ColorGrid[2], 8).draw(Palette::Green);
+		Circle(ColorGrid[2], 6).draw(Palette::Black);
 	};
 
 	void DrawBack(){

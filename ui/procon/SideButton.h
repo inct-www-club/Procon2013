@@ -49,8 +49,14 @@ public:
 			ChoiceButton.draw(Palette::Blueviolet);
 			font.draw(L"色を\n選択", 2, 102, Palette::Azure);
 		}else if(choice.ChoiceMode == 1){
-			ChoiceButton.draw(Palette::Beige);
+			ChoiceButton.draw(Palette::Orange);
 			font.draw(L"範囲を\n選択", 2, 102, Palette::Azure);
+
+			Color color;
+			if(choice.ChoiceColor == 0) color = Color(Palette::Red);
+			else if(choice.ChoiceColor == 1) color = Color(Palette::White);
+			else if(choice.ChoiceColor == 2) color = Color(Palette::Black);
+			Circle(25,450,10).draw(color);
 		}
 	};
 };
