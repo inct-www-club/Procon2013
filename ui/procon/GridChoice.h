@@ -28,8 +28,8 @@ public:
 		Ra = Point(0,0); Rb = Point(0,0);
 
 		ChoiceColor = 0;
-		for(int i = 0; i < 3 ;i++) ColorGrid[i] = Point(50,0);
-		for(int i = 0; i < 3 ;i++) RColorGrid[i] = Point(0,0);
+		for(int i = 0; i < 3 ;i++) ColorGrid[i] = Point(50+20+10*i,10);
+		for(int i = 0; i < 3 ;i++) RColorGrid[i] = Point((ColorGrid[i].x-50)*2,ColorGrid[i].y*2);
 	};
 
 	void ChangeChoiceMode(bool clicked){
@@ -89,9 +89,13 @@ public:
 	};
 
 	void SetChoiceColor(){
-		if(Input::KeyR.clicked)	ChoiceColor = 0;
+		if(Circle(ColorGrid[0], 8).leftPressed) ChoiceColor = 0;
+		else if(Circle(ColorGrid[1], 8).leftPressed) ChoiceColor = 1;
+		else if(Circle(ColorGrid[2], 8).leftPressed) ChoiceColor = 2;
+
+		/*if(Input::KeyR.clicked)	ChoiceColor = 0;
 		if(Input::KeyW.clicked)	ChoiceColor = 1;
-		if(Input::KeyB.clicked)	ChoiceColor = 2;
+		if(Input::KeyB.clicked)	ChoiceColor = 2;*/
 	};
 
 	void ThrowColorGridR(Point *R, Point *W, Point *B){
@@ -114,10 +118,10 @@ public:
 	};
 
 	void DrawGrid(){
-		/*if(a.x != NULL)*/ Circle(a, 5).draw(Palette::Red);
+		/*if(a.x != NULL)*/ Circle(a, 5).draw(Palette::Yellow);
 		/*if(b.x != NULL)*/ Circle(b, 5).draw(Palette::Blue);
 		/*if(a.x != NULL && b.x != NULL)*/
-		Rect(a.x, a.y, b.x-a.x, b.y-a.y).drawFrame(1,0,Palette::Red);
+		Rect(a.x, a.y, b.x-a.x, b.y-a.y).drawFrame(1,0,Palette::Yellow);
 		Rect(a.x-1, a.y-1, b.x-a.x+2, b.y-a.y+2).drawFrame(1,0,Palette::Blue);
 	};
 	
@@ -126,7 +130,7 @@ public:
 		String CooaS = Format() + L"(" + Ra.x + "," + Ra.y + L")";
 		String CoobS = Format() + L"(" + Rb.x + "," + Rb.y + L")";
 		
-		CooaF.draw(CooaS, 2, WindowHeight-40, Palette::Red);
+		CooaF.draw(CooaS, 2, WindowHeight-40, Palette::Yellow);
 		CooaF.draw(CoobS, 2, WindowHeight-20, Palette::Blue);
 	};
 
