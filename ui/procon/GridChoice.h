@@ -27,7 +27,7 @@ public:
 		a = Point(50,0); b = Point(50,0);
 		Ra = Point(0,0); Rb = Point(0,0);
 
-		ChoiceColor = 0;
+		ChoiceColor = -1;
 		for(int i = 0; i < 3 ;i++) ColorGrid[i] = Point(50+20+10*i,10);
 		for(int i = 0; i < 3 ;i++) RColorGrid[i] = Point((ColorGrid[i].x-50)*2,ColorGrid[i].y*2);
 	};
@@ -43,20 +43,7 @@ public:
 		return ChoiceMode;
 	};
 
-	void Position1(){
-		if(backrect.leftPressed){
-			a = Mouse::Pos();
-			Ra.x = (a.x-50)*2;
-			Ra.y = a.y*2;
-		}
-		if(backrect.rightPressed){
-			b = Mouse::Pos();
-			Rb.x = (b.x-50)*2;
-			Rb.y = b.y*2;
-		}
-	};
-
-	void Position2(){
+	void Position(){
 		if(backrect.leftClicked){
 			a = Mouse::Pos();
 			Ra.x = (a.x-50)*2;
@@ -64,10 +51,12 @@ public:
 			leftPress = true;
 		}
 		if(leftPress){
-			b = Mouse::Pos();
-			Rb.x = (b.x-50)*2;
-			Rb.y = b.y*2;
 			if(backrect.leftPressed == false) leftPress = false;
+			else {
+				b = Mouse::Pos();
+				Rb.x = (b.x-50)*2;
+				Rb.y = b.y*2;
+			}
 		}
 	};
 
@@ -89,28 +78,29 @@ public:
 	};
 
 	void SetChoiceColor(){
-		if(Circle(ColorGrid[0], 8).leftPressed) ChoiceColor = 0;
-		else if(Circle(ColorGrid[1], 8).leftPressed) ChoiceColor = 1;
-		else if(Circle(ColorGrid[2], 8).leftPressed) ChoiceColor = 2;
+		if(ChoiceColor == -1){
+			if(Circle(ColorGrid[0], 8).leftPressed) ChoiceColor = 0;
+			else if(Circle(ColorGrid[1], 8).leftPressed) ChoiceColor = 1;
+			else if(Circle(ColorGrid[2], 8).leftPressed) ChoiceColor = 2;
+		}else{
+			if(backrect.leftReleased) ChoiceColor = -1;
+		}
 
-		/*if(Input::KeyR.clicked)	ChoiceColor = 0;
-		if(Input::KeyW.clicked)	ChoiceColor = 1;
-		if(Input::KeyB.clicked)	ChoiceColor = 2;*/
 	};
 
 	void ThrowColorGridR(Point *R, Point *W, Point *B){
 		*R = RColorGrid[0]; *W = RColorGrid[1]; *B = RColorGrid[2];
 	};
 
-	void DrawColorGrid(){
-		Circle(ColorGrid[0], 8).draw(Palette::Green);
-		Circle(ColorGrid[0], 6).draw(Palette::Red);
+	void DrawColorGrid(){		
+		Circle(ColorGrid[2], 8).draw(Palette::Green);
+		Circle(ColorGrid[2], 6).draw(Palette::Black);
 
 		Circle(ColorGrid[1], 8).draw(Palette::Green);
 		Circle(ColorGrid[1], 6).draw(Palette::White);
-		
-		Circle(ColorGrid[2], 8).draw(Palette::Green);
-		Circle(ColorGrid[2], 6).draw(Palette::Black);
+
+		Circle(ColorGrid[0], 8).draw(Palette::Green);
+		Circle(ColorGrid[0], 6).draw(Palette::Red);
 	};
 
 	void DrawBack(){
@@ -118,9 +108,9 @@ public:
 	};
 
 	void DrawGrid(){
-		/*if(a.x != NULL)*/ Circle(a, 5).draw(Palette::Yellow);
-		/*if(b.x != NULL)*/ Circle(b, 5).draw(Palette::Blue);
-		/*if(a.x != NULL && b.x != NULL)*/
+		Circle(a, 5).draw(Palette::Yellow);
+		Circle(b, 5).draw(Palette::Blue);
+		
 		Rect(a.x, a.y, b.x-a.x, b.y-a.y).drawFrame(1,0,Palette::Yellow);
 		Rect(a.x-1, a.y-1, b.x-a.x+2, b.y-a.y+2).drawFrame(1,0,Palette::Blue);
 	};

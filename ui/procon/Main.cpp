@@ -31,17 +31,12 @@ void Main()
             appResult.Result_Set(result, a);
 		
         }
-
-		if(appGridChoice.ChoiceMode == 0){
-			appGridChoice.Position2();
-		}
-		else if(appGridChoice.ChoiceMode == 1){
-			appGridChoice.SetChoiceColor();
-			appGridChoice.ColorPosition();
-		}
+		
+		appGridChoice.SetChoiceColor();
+		appGridChoice.ColorPosition();
+		if(appGridChoice.ChoiceColor < 0 || appGridChoice.ChoiceColor > 2) appGridChoice.Position();
 
 		appOpenImage.ClickedOpenImage(appSideButton);
-		appGridChoice.ChangeChoiceMode(appSideButton.ChoiceButtonClick());
 
 		appGridChoice.DrawBack();
 		appOpenImage.Draw();
@@ -53,5 +48,6 @@ void Main()
 		appResult.DrawPacket();
 		
 		appGridChoice.DrawGrid();
+
 	}
 }

@@ -34,6 +34,7 @@ public:
 class Result{
 public:
 	Die BigDice[5][9], SmallDice[2][14];
+	bool ResultDraw;
 
 	Result(){
 		for(int i = 0; i < 5; i++){
@@ -46,6 +47,7 @@ public:
 				SmallDice[i][j] = Die();
 			}
 		}
+		ResultDraw = false;
 	};
 
 	void Result_Set(std::vector<std::pair<Coord, int>> result, Point PacketLeftTop){
@@ -61,18 +63,20 @@ public:
 					Point(result[i*14 + j + 45].first.first/2 + PacketLeftTop.x -50, result[i*14 + j + 45].first.second/2), Point(0,0));
 			}
 		}
-
+		ResultDraw = true;
 	};
 
 	void DrawPacket(){
-		for(int i = 0; i < 5; i++){
-			for(int j = 0; j < 9; j++){
-				BigDice[i][j].DrawRoll();
+		if(ResultDraw){
+			for(int i = 0; i < 5; i++){
+				for(int j = 0; j < 9; j++){
+					BigDice[i][j].DrawRoll();
+				}
 			}
-		}
-		for(int i = 0; i < 2; i++){
-			for(int j = 0; j < 14; j++){
-				SmallDice[i][j].DrawRoll();
+			for(int i = 0; i < 2; i++){
+				for(int j = 0; j < 14; j++){
+					SmallDice[i][j].DrawRoll();
+				}
 			}
 		}
 	};

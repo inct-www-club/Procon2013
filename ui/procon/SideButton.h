@@ -8,14 +8,13 @@
 class SideButton
 {
 public:
-	Rect OpenButton, AnalyzeButton, ChoiceButton;
+	Rect OpenButton, AnalyzeButton;
 	Font font;
 
 	SideButton(){
 		font = Font(10);
 		OpenButton = Rect(0,0,50,50);
 		AnalyzeButton = Rect(0, 50, 50, 50);
-		ChoiceButton = Rect(0, 100, 50, 50);
 	};
 
 	bool OpenButtonClick(){
@@ -32,32 +31,11 @@ public:
 		return false;
 	};
 
-	bool ChoiceButtonClick(){
-		if(ChoiceButton.leftClicked){
-			return true;
-		}
-		return false;
-	};
-
 	void Draw(GridChoice choice){
 		OpenButton.draw(Palette::Brown);
 		font.draw(L"画像を\n開く", 2,2, Palette::Azure);
 		AnalyzeButton.draw(Palette::Red);
 		font.draw(L"画像を\n解析", 2, 52, Palette::Azure);
-		
-		if(choice.ChoiceMode == 0){
-			ChoiceButton.draw(Palette::Blueviolet);
-			font.draw(L"色を\n選択", 2, 102, Palette::Azure);
-		}else if(choice.ChoiceMode == 1){
-			ChoiceButton.draw(Palette::Orange);
-			font.draw(L"範囲を\n選択", 2, 102, Palette::Azure);
-
-			Color color;
-			if(choice.ChoiceColor == 0) color = Color(Palette::Red);
-			else if(choice.ChoiceColor == 1) color = Color(Palette::White);
-			else if(choice.ChoiceColor == 2) color = Color(Palette::Black);
-			Circle(25,450,10).draw(color);
-		}
 	};
 };
 
