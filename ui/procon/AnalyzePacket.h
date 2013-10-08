@@ -27,6 +27,7 @@ class PacketImage{
         RGB criterion5;
 
         void calculateCriteria();
+        void calculateCriteria(int redX, int redY, int whiteX, int whiteY, int blackX, int blackY);
 		RGB colorAverage(int xCoordinate, int yCoordinate, int diceSize);
 		int decideRoll(RGB average);
 		std::vector<std::pair<Coord, int>> analyzePacket(const int left, const int top, const int right, const int bottom);

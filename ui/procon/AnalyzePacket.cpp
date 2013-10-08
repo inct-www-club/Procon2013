@@ -54,6 +54,15 @@ void PacketImage::calculateCriteria()
     criterion5 = RGB(0, 0, 0);
 }
 
+void PacketImage::calculateCriteria(int redX, int redY, int whiteX, int whiteY, int blackX, int blackY)
+{
+    const int r = 8;
+    // TODO: Actually calculate
+    criterion1 = colorAverage(redX, redY, r);
+    criterion2 = colorAverage(whiteX, whiteY, r);
+    criterion5 = colorAverage(blackX, blackY, r);
+}
+
 RGB PacketImage::colorAverage(int tx, int ty, int radius){
 
 	unsigned long int accumR = 0, accumG = 0, accumB = 0;
