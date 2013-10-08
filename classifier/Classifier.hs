@@ -22,13 +22,12 @@ regionBrightness (IntegratedImage ar) s@(V2 sx sy) i = fromIntegral (m ar) / 256
         c <- v $ ix $ i + V2 (-hx) (-hy)
         return $ r - a - b - c
 
-integrate :: R.Source r Word8 => R.Array r R.DIM3 Word8 -> IntegratedImage
-integrate ar = IntegratedImage $ runSTUArray $ do
-    let (Z R.:. h R.:. w R.:. _, f) = R.toFuncton ar
-    let br (V2 i j) = (`div`3) $ fromIntegral $ f (Z R.:. j R.:. i R.:. 0) + f (Z R.:. j R.:. i R.:. 1) + f (Z R.:. j R.:. i R.:. 2)
-    
-    m <- newArray_ (V2 0 0, V2 (h - 1) (w - 1))
+crop :: R.Source r Word8 => V2 Int -> V2 Int -> V2 Int -> V2 Int -> V2 Int -> R.Array r R.DIM3 Word8 -> 
+crop 
 
+integrate :: R.Source r Word8 => UArray (Int, Int) Int -> IntegratedImage
+integrate ar = IntegratedImage $ runSTUArray $ do
+    m <- thaw ar
     forM_ [0..w-1] $ \i -> do
         let x = V2 i 0
         writeArray m x $ br x

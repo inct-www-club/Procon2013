@@ -98,7 +98,7 @@ int PacketImage::decideRoll(RGB average){
 	}
 }
 
-std::vector<std::pair<Coord, int>> PacketImage::analyzePacket(const int left, const int top, int right, int bottom){
+std::vector<std::pair<s3d::Rect, int>> PacketImage::analyzePacket(const int left, const int top, int right, int bottom){
 	const int packetWidth = right - left;
 	const int packetHeight = bottom - top;
 
@@ -106,12 +106,11 @@ std::vector<std::pair<Coord, int>> PacketImage::analyzePacket(const int left, co
 	double largeSize  = mediumSize * 1.6; 
 
 	//result = Format() + result + L"\nlefttopX = " + lefttopX + " mSize = " + mediumSize;
-
 	double DiceSize;
 	int DiceColumns;
 	const int DiceRows = 7;
 	double y = (double)top;
-    std::vector<std::pair<Coord, int>> result;
+    std::vector<std::pair<s3d::Rect, int>> result;
 
 	for(int i=0; i<DiceRows; i++, y+=DiceSize){
 		if(i < 5){
@@ -124,13 +123,12 @@ std::vector<std::pair<Coord, int>> PacketImage::analyzePacket(const int left, co
 		}
 		double x = (double)top;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
-			result.push_back(std::pair<Coord, int>(Coord(x, y), (decideRoll( colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize/3.0))))));
+            result.push_back(std::pair<s3d::Rect, int>(Rect(x, y, DiceSize, DiceSize), (decideRoll(colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 3.0))))));
 		}
 	}
     return result;
 
 }
-
 
 
 //デバッグ用メイン (out of date?)
