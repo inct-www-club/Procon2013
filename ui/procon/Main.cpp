@@ -24,7 +24,7 @@ void Main()
 		if(appSideButton.AnalyzeButtonClick() == true && appGridChoice.PointRight()){
 			PacketImage packet = PacketImage(appOpenImage.image);
             std::vector<std::pair<Coord, int>> result 
-				= packet.analyzePacket(appGridChoice.Ra.x, appGridChoice.Ra.y, appGridChoice.Rb.x, appGridChoice.Rb.y);
+				= packet.analyzePacket(appGridChoice.Rlt.x, appGridChoice.Rlt.y, appGridChoice.Rrb.x, appGridChoice.Rrb.y);
             
 			Point a, b;
 			appGridChoice.ThrowGridPoint(&a, &b);
