@@ -14,7 +14,7 @@ RGB::RGB(){
 	b=0;
 }
 
-RGB::RGB(char _r, char _g, char _b)
+RGB::RGB(unsigned char _r, unsigned char _g, unsigned char _b)
 {
     r = _r;
     g = _g;
@@ -32,7 +32,7 @@ float RGB::Dot(RGB x)
 }
 float RGB::Distance(RGB x)
 {
-    float dr = (float)(r - x.r), dg = (float)(g - x.g), db = (float)(b - x.b);
+    float dr = (float)r - (float)x.r, dg = (float)g - (float)x.g, db = (float)b - (float)x.b;
     return dr * dr + dg * dg + db * db;
 }
 
@@ -82,7 +82,7 @@ RGB PacketImage::colorAverage(int tx, int ty, int radius){
 		}
 
 	}
-	return RGB((char)(accumR / n), (char)(accumG / n), (char)(accumB / n));
+	return RGB(accumR / n, accumG / n, accumB / n);
 }
 
 
@@ -123,7 +123,8 @@ std::vector<std::pair<s3d::Rect, int>> PacketImage::analyzePacket(const int left
 		}
 		double x = (double)top;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
-            result.push_back(std::pair<s3d::Rect, int>(Rect(x, y, DiceSize, DiceSize), (decideRoll(colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 3.0))))));
+            result.push_back(std::pair<s3d::Rect, int>(Rect(x, y, DiceSize, DiceSize)
+                , (decideRoll(colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 3.0))))));
 		}
 	}
     return result;

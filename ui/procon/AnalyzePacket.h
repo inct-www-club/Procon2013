@@ -5,9 +5,9 @@
 
 class RGB{
 	public:
-		char r, g, b;
+		unsigned char r, g, b;
 		RGB();
-        RGB(char r, char g, char b);
+        RGB(unsigned char r, unsigned char g, unsigned char b);
         float Brightness();
         float Dot(RGB x);
         float Distance(RGB x);
