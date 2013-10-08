@@ -37,7 +37,7 @@ float RGB::Distance(RGB x)
 }
 
 PacketImage::PacketImage(void){
-	image = Dialog::OpenImage();
+	//image = Dialog::OpenImage();
     calculateCriteria();
 }
 
@@ -124,7 +124,7 @@ std::vector<std::pair<s3d::Rect, int>> PacketImage::analyzePacket(const int left
 		double x = (double)top;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
             result.push_back(std::pair<s3d::Rect, int>(Rect(x, y, DiceSize, DiceSize)
-                , (decideRoll(colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 3.0))))));
+                , (decideRoll(colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 5.0))))));
 		}
 	}
     return result;

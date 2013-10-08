@@ -143,7 +143,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnalyzePacket.h" />
-    <ClInclude Include="BaseInfo.h" />
     <ClInclude Include="SideButton.h" />
     <ClInclude Include="GridChoice.h" />
     <ClInclude Include="OpenImage.h" />

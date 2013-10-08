@@ -82,10 +82,11 @@ public:
 			}
 
 			for(int i = 0; i < 5; i++){
-				for(int j = 0; j < 9; j++){
-					//Rect(BigDice[i][j].LeftTop,  BigDice[i][j].RightBottom).drawFrame(2,0,Palette::Orange);
+				for(int j= 0; j < 9; j++){
 					int xsize = BigDice[i][j].RightBottom.x - BigDice[i][j].LeftTop.x,
 						ysize = BigDice[i][j].RightBottom.y - BigDice[i][j].LeftTop.y;
+
+					Rect(BigDice[i][j].LeftTop.x, BigDice[i][j].LeftTop.y, xsize, ysize).drawFrame(1,1,Color(i*30,j*30,(i+j)*20));
 						
 					Circle(Point(BigDice[i][j].LeftTop.x + xsize/2,  BigDice[i][j].LeftTop.y + ysize/2), 3).draw(Palette::Orange);
 				}
@@ -94,9 +95,10 @@ public:
 				for(int j = 0; j < 14; j++){
 					int xsize = SmallDice[i][j].RightBottom.x - SmallDice[i][j].LeftTop.x,
 						ysize = SmallDice[i][j].RightBottom.y - SmallDice[i][j].LeftTop.y;
+
+					Rect(SmallDice[i][j].LeftTop.x, SmallDice[i][j].LeftTop.y, xsize, ysize).drawFrame(1,1,Palette::Chocolate);
 						
 					Circle(Point(SmallDice[i][j].LeftTop.x + xsize/2,  SmallDice[i][j].LeftTop.y + ysize/2), 3).draw(Palette::Orange);
-					//Rect(SmallDice[i][j].LeftTop,  SmallDice[i][j].RightBottom).drawFrame(2,0,Palette::Orange);
 				}
 			}
 		}
