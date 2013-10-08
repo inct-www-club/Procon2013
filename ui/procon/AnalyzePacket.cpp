@@ -110,7 +110,7 @@ std::vector<std::pair<s3d::Rect, int>> PacketImage::analyzePacket(const int left
 	int DiceColumns;
 	const int DiceRows = 7;
 	double y = (double)top;
-    std::vector<std::pair<s3d::Rect, int>> result;
+    std::vector<std::pair<s3d::Rect, RGB>> result;
 
 	for(int i=0; i<DiceRows; i++, y+=DiceSize){
 		if(i < 5){
@@ -123,8 +123,8 @@ std::vector<std::pair<s3d::Rect, int>> PacketImage::analyzePacket(const int left
 		}
 		double x = (double)top;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
-            result.push_back(std::pair<s3d::Rect, int>(Rect(x, y, DiceSize, DiceSize)
-                , (decideRoll(colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 3.0))))));
+            RGB color = colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 3.0));
+            result.push_back(std::pair<s3d::Rect, int>(Rect(x, y, DiceSize, DiceSize), color));
 		}
 	}
     return result;
