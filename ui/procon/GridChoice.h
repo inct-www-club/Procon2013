@@ -119,15 +119,18 @@ public:
 		*R = RColorGrid[0]; *W = RColorGrid[1]; *B = RColorGrid[2];
 	};
 
-	void DrawColorGrid(){		
-		Circle(ColorGrid[2], 8).draw(Palette::Green);
-		Circle(ColorGrid[2], 6).draw(Palette::Black);
+	void DrawColorGrid(){
+		Color c;
+		for(int i = 2; i >= 0; i--){
+			if(i == 2) c = Color(Palette::Black);
+			else if(i == 1) c = Color(Palette::White);
+			else if(i == 0) c = Color(Palette::Red);
 
-		Circle(ColorGrid[1], 8).draw(Palette::Green);
-		Circle(ColorGrid[1], 6).draw(Palette::White);
-
-		Circle(ColorGrid[0], 8).draw(Palette::Green);
-		Circle(ColorGrid[0], 6).draw(Palette::Red);
+			Circle(ColorGrid[i], 8).draw(Palette::Green);
+			Circle(ColorGrid[i], 6).draw(c);
+			Line(Point(ColorGrid[i].x, ColorGrid[i].y-10), Point(ColorGrid[i].x, ColorGrid[i].y+10)).draw(1,Palette::Green);
+			Line(Point(ColorGrid[i].x-10, ColorGrid[i].y), Point(ColorGrid[i].x+10, ColorGrid[i].y)).draw(1,Palette::Green);
+		}
 	};
 
 	void DrawBack(){
@@ -144,15 +147,10 @@ public:
 		Line(lb, rb).draw(2, Palette::Blue);
 		Line(rt, rb).draw(2, Palette::Aqua);
 		Line(lt, lb).draw(2, Palette::Greenyellow);
-
-		//Rect(lt.x, lt.y, rb.x-lt.x, rb.y-lt.y).drawFrame(1,0,Palette::Yellow);
-		//Rect(lt.x-1, lt.y-1, rb.x-lt.x+2, rb.y-lt.y+2).drawFrame(1,0,Palette::Blue);
 	};
 	
 	void DrawGridCoordinate(){
 		const Font CooltF(10), CoortF(10), CoolbF(10), CoorbF(10);
-		//String CooaS = Format() + L"(" + Rlt.x + "," + Rlt.y + L")";
-		//String CoobS = Format() + L"(" + Rrb.x + "," + Rrb.y + L")";
 		
 		CooltF.draw(Format() + L"(" + Rlt.x + L"," + Rlt.y + L")", 2, WindowHeight-80, Palette::Yellow);
 		CoortF.draw(Format() + L"(" + Rrt.x + L"," + Rrt.y + L")", 2, WindowHeight-60, Palette::Aqua);

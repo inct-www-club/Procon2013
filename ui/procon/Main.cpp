@@ -23,7 +23,11 @@ void Main()
 	{
 		if(appSideButton.AnalyzeButtonClick() == true && appGridChoice.PointRight()){
 			PacketImage packet = PacketImage(appOpenImage.image);
-            std::vector<std::pair<Coord, int>> result 
+			packet.calculateCriteria(appGridChoice.RColorGrid[0].x, appGridChoice.RColorGrid[0].y,
+				appGridChoice.RColorGrid[1].x, appGridChoice.RColorGrid[1].y,
+				appGridChoice.RColorGrid[2].x, appGridChoice.RColorGrid[2].y);
+
+            std::vector<std::pair<s3d::Rect, int>> result 
 				= packet.analyzePacket(appGridChoice.Rlt.x, appGridChoice.Rlt.y, appGridChoice.Rrb.x, appGridChoice.Rrb.y);
             
 			Point a, b;
@@ -34,6 +38,8 @@ void Main()
 		
 		appGridChoice.SetChoiceColor();
 		appGridChoice.ColorPosition();
+		
+
 		if(appGridChoice.ChoiceColor < 0 || appGridChoice.ChoiceColor > 2) appGridChoice.Position();
 
 		appOpenImage.ClickedOpenImage(appSideButton);
