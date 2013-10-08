@@ -1,0 +1,687 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;font-size:10pt;}</style>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
+</head>
+<body>
+<h2 id="preview.hs">preview.hs</h2>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">{-# LANGUAGE TemplateHaskell, FlexibleContexts, RankNTypes, LambdaCase, MultiWayIf #-}</span>
+<span class="co">{-</span>
+<span class="co">Requires GHC &gt;= 7.6</span>
+<span class="co">cabal update &amp;&amp; cabal install free-game lens</span>
+<span class="co">cat /path/to/text | encoder encode | runhaskell preview.hs</span>
+<span class="co">-}</span>
+<span class="kw">import</span> Graphics.UI.FreeGame
+<span class="kw">import</span> Control.Monad
+<span class="kw">import</span> Control.Monad.IO.Class
+<span class="kw">import</span> System.IO.Unsafe
+<span class="kw">import</span> Control.Monad.State
+<span class="kw">import</span> System.Random
+<span class="kw">import</span> Control.Monad.Trans.Maybe
+<span class="kw">import</span> Control.Lens
+<span class="kw">import</span> Control.Concurrent.MVar
+<span class="kw">import</span> System.Environment
+
+loadBitmaps <span class="st">&quot;images&quot;</span>
+
+theFont <span class="fu">=</span> unsafePerformIO <span class="fu">$</span> loadFont <span class="st">&quot;VL-PGothic-Regular.ttf&quot;</span>
+
+<span class="ot">die ::</span> <span class="dt">Picture2D</span> m <span class="ot">=&gt;</span> <span class="dt">Char</span> <span class="ot">-&gt;</span> m ()
+die <span class="ch">&#39;R&#39;</span> <span class="fu">=</span> fromBitmap _die_1_png
+die <span class="ch">&#39;W&#39;</span> <span class="fu">=</span> fromBitmap _die_2_png
+die <span class="ch">&#39;B&#39;</span> <span class="fu">=</span> fromBitmap _die_5_png
+
+<span class="ot">dieMedium ::</span> <span class="dt">Picture2D</span> m <span class="ot">=&gt;</span> <span class="dt">Char</span> <span class="ot">-&gt;</span> m ()
+dieMedium <span class="fu">=</span> scale (<span class="dv">10</span><span class="fu">/</span><span class="dv">16</span>) <span class="fu">.</span> die
+
+sizeLarge <span class="fu">=</span> <span class="dv">96</span>
+
+sizeMedium <span class="fu">=</span> <span class="dv">96</span> <span class="fu">*</span> <span class="dv">10</span> <span class="fu">/</span> <span class="dv">16</span>
+
+<span class="kw">data</span> <span class="dt">Packet</span> <span class="fu">=</span> <span class="dt">Packet</span> {
+    _<span class="ot">meta ::</span> <span class="dt">String</span>
+    , _<span class="ot">dice ::</span> [<span class="dt">Char</span>]
+    }
+makeLenses <span class="ch">&#39;&#39;</span><span class="dt">Packet</span>
+
+<span class="kw">data</span> <span class="dt">World</span> <span class="fu">=</span> <span class="dt">World</span> {
+    _<span class="ot">packetIndex ::</span> <span class="dt">Int</span>
+    , _<span class="ot">packets ::</span> [<span class="dt">Packet</span>]
+    , _<span class="ot">keyL ::</span> <span class="dt">Bool</span>
+    , _<span class="ot">keyR ::</span> <span class="dt">Bool</span>
+    }
+makeLenses <span class="ch">&#39;&#39;</span><span class="dt">World</span>
+
+<span class="ot">pickHead ::</span> (<span class="dt">MonadState</span> [a] m, <span class="dt">MonadIO</span> m, <span class="dt">MonadPlus</span> m) <span class="ot">=&gt;</span> m a
+pickHead <span class="fu">=</span> get <span class="fu">&gt;&gt;=</span> \r <span class="ot">-&gt;</span> <span class="kw">case</span> r <span class="kw">of</span>
+    (x<span class="fu">:</span>xs) <span class="ot">-&gt;</span> put xs <span class="fu">&gt;&gt;</span> return x
+    [] <span class="ot">-&gt;</span> mzero
+
+<span class="ot">renderPacket ::</span> (<span class="dt">Picture2D</span> m, <span class="dt">MonadIO</span> m) <span class="ot">=&gt;</span> <span class="dt">Packet</span> <span class="ot">-&gt;</span> m ()
+renderPacket pkt <span class="fu">=</span> scale <span class="dv">0</span><span class="fu">.</span><span class="dv">7</span> <span class="fu">$</span> translate (<span class="dt">V2</span> <span class="dv">48</span> <span class="dv">48</span>) <span class="fu">$</span> flip evalStateT (view dice pkt) <span class="fu">$</span> <span class="kw">do</span>
+    runMaybeT <span class="fu">$</span> <span class="kw">do</span>
+        forM_ [<span class="dv">0</span><span class="fu">..</span><span class="dv">4</span>] <span class="fu">$</span> \r <span class="ot">-&gt;</span> <span class="kw">do</span>
+            forM_ [<span class="dv">0</span><span class="fu">..</span><span class="dv">8</span>] <span class="fu">$</span> \c <span class="ot">-&gt;</span> <span class="kw">do</span>
+                x <span class="ot">&lt;-</span> pickHead
+                translate (<span class="dt">V2</span> c r <span class="fu">^*</span> sizeLarge) (die x)
+        forM_ [<span class="dv">0</span><span class="fu">..</span><span class="dv">1</span>] <span class="fu">$</span> \r <span class="ot">-&gt;</span> <span class="kw">do</span>
+            forM_ [<span class="dv">0</span><span class="fu">..</span><span class="dv">13</span>] <span class="fu">$</span> \c <span class="ot">-&gt;</span> <span class="kw">do</span>
+                x <span class="ot">&lt;-</span> pickHead
+                translate (<span class="dt">V2</span> c r <span class="fu">^*</span> sizeMedium <span class="fu">-</span> <span class="dt">V2</span> <span class="dv">18</span> <span class="dv">18</span> <span class="fu">+</span> <span class="dt">V2</span> <span class="dv">0</span> <span class="dv">480</span>) <span class="fu">$</span> dieMedium x
+    return ()
+
+<span class="ot">renderWorld ::</span> (<span class="dt">MonadState</span> <span class="dt">World</span> m, <span class="dt">Picture2D</span> m, <span class="dt">MonadIO</span> m) <span class="ot">=&gt;</span> m ()
+renderWorld <span class="fu">=</span> <span class="kw">do</span>
+    i <span class="ot">&lt;-</span> use packetIndex
+    preuse (packets <span class="fu">.</span> ix i) <span class="fu">&gt;&gt;=</span> maybe (return ()) renderPacket
+
+<span class="ot">toPackets ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> [<span class="dt">Packet</span>]
+toPackets <span class="st">&quot;&quot;</span> <span class="fu">=</span> []
+toPackets xs <span class="fu">=</span> <span class="dt">Packet</span> { _meta <span class="fu">=</span> <span class="st">&quot;&quot;</span>, _dice <span class="fu">=</span> take <span class="dv">90</span> xs } <span class="fu">:</span> toPackets (drop <span class="dv">90</span> xs)
+
+<span class="ot">stateToMVar ::</span> <span class="dt">MonadIO</span> m <span class="ot">=&gt;</span> <span class="dt">MVar</span> s <span class="ot">-&gt;</span> <span class="dt">StateT</span> s m a <span class="ot">-&gt;</span> m a
+stateToMVar mv m <span class="fu">=</span> <span class="kw">do</span>
+    s <span class="ot">&lt;-</span> liftIO <span class="fu">$</span> takeMVar mv
+    (a, s&#39;) <span class="ot">&lt;-</span> runStateT m s
+    liftIO <span class="fu">$</span> putMVar mv s&#39;
+    return a
+
+previewMain window <span class="fu">=</span> <span class="kw">do</span>
+    pkts <span class="ot">&lt;-</span> toPackets <span class="fu">&lt;$&gt;</span> getLine
+    font <span class="ot">&lt;-</span> loadFont <span class="st">&quot;VL-PGothic-Regular.ttf&quot;</span>
+    runGame def { _windowed <span class="fu">=</span> window } <span class="fu">$</span> flip execStateT (<span class="dt">World</span> { _packetIndex <span class="fu">=</span> <span class="dv">0</span>, _packets <span class="fu">=</span> pkts, _keyL <span class="fu">=</span> <span class="dt">False</span>, _keyR <span class="fu">=</span> <span class="dt">False</span> }) <span class="fu">$</span> foreverTick <span class="fu">$</span> <span class="kw">do</span>
+        whenM (notM (use keyL) <span class="fu">&lt;&amp;=&gt;</span> keySpecial <span class="dt">KeyLeft</span>) <span class="fu">$</span> packetIndex <span class="fu">-=</span> <span class="dv">1</span>
+        whenM (notM (use keyR) <span class="fu">&lt;&amp;=&gt;</span> keySpecial <span class="dt">KeyRight</span>) <span class="fu">$</span> packetIndex <span class="fu">+=</span> <span class="dv">1</span>
+        keyL <span class="fu">&lt;~</span> keySpecial <span class="dt">KeyLeft</span>
+        keyR <span class="fu">&lt;~</span> keySpecial <span class="dt">KeyRight</span>
+        renderWorld
+
+        i <span class="ot">&lt;-</span> use packetIndex
+        translate (<span class="dt">V2</span> <span class="dv">100</span> <span class="dv">240</span>) <span class="fu">$</span> colored (blue <span class="fu">&amp;</span> _<span class="dt">Alpha</span> <span class="fu">.~</span> <span class="dv">0</span><span class="fu">.</span><span class="dv">5</span>) <span class="fu">$</span> text font <span class="dv">240</span> <span class="fu">$</span> <span class="st">&quot;#&quot;</span> <span class="fu">++</span> show i
+
+        whenM (keySpecial <span class="dt">KeyEsc</span>) quit <span class="ot">`asTypeOf`</span> return ()
+
+main <span class="fu">=</span> <span class="kw">do</span>
+    args <span class="ot">&lt;-</span> getArgs
+    <span class="kw">if</span>  <span class="fu">|</span> <span class="st">&quot;-h&quot;</span> <span class="ot">`elem`</span> args <span class="ot">-&gt;</span> putStrLn <span class="st">&quot;\</span>
+<span class="st">            \Usage: preview [-f] [-h]\n\</span>
+<span class="st">            \\tstdin: a sequence of dice ([RWS]*)\n\</span>
+<span class="st">            \\t-f Run in a full-screen mode\n\</span>
+<span class="st">            \\t-h Show this message\n\n\</span>
+<span class="st">            \\tPrevious packet: Left\n\</span>
+<span class="st">            \\tNext packet: Right\n\</span>
+<span class="st">            \\tQuit: Esc&quot;</span>
+        <span class="fu">|</span> otherwise <span class="ot">-&gt;</span> previewMain (<span class="st">&quot;-f&quot;</span> <span class="ot">`notElem`</span> args) <span class="fu">&gt;&gt;</span> return ()</code></pre>
+<h2 id="encoder.hs">encoder.hs</h2>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import</span> Control.Applicative
+<span class="kw">import</span> Data.List
+<span class="kw">import</span> Control.Lens
+<span class="kw">import</span> Control.Monad.State
+<span class="kw">import</span> System.Environment
+
+<span class="co">-- | The list of letters</span>
+<span class="ot">letters ::</span> [<span class="dt">Char</span>]
+letters <span class="fu">=</span> concat <span class="fu">$</span> f <span class="fu">&lt;$&gt;</span> [<span class="dv">2</span><span class="fu">..</span><span class="dv">7</span>] <span class="fu">&lt;*&gt;</span> [<span class="dv">0</span><span class="fu">..</span><span class="dv">15</span>] <span class="kw">where</span>
+    f x y <span class="fu">=</span> [toEnum v <span class="fu">|</span> <span class="kw">let</span> v <span class="fu">=</span> x <span class="fu">*</span> <span class="dv">16</span> <span class="fu">+</span> y, v <span class="ot">`notElem`</span> [<span class="dv">0x20</span>, <span class="dv">0x5B</span>, <span class="dv">0x5C</span>, <span class="dv">0x5D</span>, <span class="dv">0x5E</span>, <span class="dv">0x7B</span>, <span class="dv">0x7C</span>, <span class="dv">0x7D</span>, <span class="dv">0x7E</span>, <span class="dv">0x7F</span>]]
+
+<span class="co">-- | Convert a character to an integer</span>
+_<span class="dt">Letter</span><span class="ot"> ::</span> <span class="dt">Iso&#39;</span> <span class="dt">Char</span> <span class="dt">Int</span>
+_<span class="dt">Letter</span> <span class="fu">=</span> iso (\x <span class="ot">-&gt;</span> elemIndex x letters <span class="fu">^?!</span> _<span class="dt">Just</span>) (letters <span class="fu">!!</span>)
+
+<span class="co">-- | The type of dice</span>
+<span class="kw">data</span> <span class="dt">Die</span> <span class="fu">=</span> <span class="dt">D5</span> <span class="fu">|</span> <span class="dt">D1</span> <span class="fu">|</span> <span class="dt">D2</span> <span class="kw">deriving</span> (<span class="dt">Show</span>, <span class="dt">Eq</span>, <span class="dt">Ord</span>, <span class="dt">Enum</span>)
+
+<span class="co">-- | Convert a string to dice</span>
+_<span class="dt">Stream</span><span class="ot"> ::</span> <span class="dt">Iso&#39;</span> [<span class="dt">Char</span>] [<span class="dt">Die</span>]
+_<span class="dt">Stream</span> <span class="fu">=</span> encodeString <span class="fu">.</span> encodeBlocks
+
+<span class="kw">data</span> <span class="dt">Block</span> <span class="fu">=</span> <span class="dt">Triad</span> <span class="dt">Int</span> <span class="dt">Int</span> <span class="dt">Int</span> <span class="fu">|</span> <span class="dt">Pair</span> <span class="dt">Int</span> <span class="dt">Int</span> <span class="fu">|</span> <span class="dt">Unit</span> <span class="dt">Int</span> <span class="kw">deriving</span> (<span class="dt">Show</span>, <span class="dt">Eq</span>, <span class="dt">Ord</span>)
+
+<span class="co">-- | Convert a string to blocks</span>
+<span class="ot">encodeString ::</span> <span class="dt">Iso&#39;</span> [<span class="dt">Char</span>] [<span class="dt">Block</span>]
+encodeString <span class="fu">=</span> iso toBlocks fromBlocks <span class="kw">where</span>
+<span class="ot">    toBlocks ::</span> [<span class="dt">Char</span>] <span class="ot">-&gt;</span> [<span class="dt">Block</span>]
+    toBlocks (x<span class="fu">:</span>y<span class="fu">:</span>z<span class="fu">:</span>zs) <span class="fu">=</span> <span class="dt">Triad</span> (view _<span class="dt">Letter</span> x) (view _<span class="dt">Letter</span> y) (view _<span class="dt">Letter</span> z) <span class="fu">:</span> toBlocks zs
+    toBlocks (x<span class="fu">:</span>y<span class="fu">:</span>ys) <span class="fu">=</span> <span class="dt">Pair</span> (view _<span class="dt">Letter</span> x) (view _<span class="dt">Letter</span> y) <span class="fu">:</span> toBlocks ys
+    toBlocks (x<span class="fu">:</span>xs) <span class="fu">=</span> <span class="dt">Unit</span> (view _<span class="dt">Letter</span> x) <span class="fu">:</span> toBlocks xs
+    toBlocks [] <span class="fu">=</span> []
+
+<span class="ot">    fromBlocks ::</span> [<span class="dt">Block</span>] <span class="ot">-&gt;</span> [<span class="dt">Char</span>]
+    fromBlocks (<span class="dt">Unit</span> x <span class="fu">:</span> bs) <span class="fu">=</span> view (from _<span class="dt">Letter</span>) x <span class="fu">:</span> fromBlocks bs
+    fromBlocks (<span class="dt">Pair</span> x y <span class="fu">:</span> bs) <span class="fu">=</span> view (from _<span class="dt">Letter</span>) x <span class="fu">:</span> view (from _<span class="dt">Letter</span>) y <span class="fu">:</span> fromBlocks bs
+    fromBlocks (<span class="dt">Triad</span> x y z <span class="fu">:</span> bs) <span class="fu">=</span> view (from _<span class="dt">Letter</span>) x <span class="fu">:</span> view (from _<span class="dt">Letter</span>) y <span class="fu">:</span> view (from _<span class="dt">Letter</span>) z <span class="fu">:</span> fromBlocks bs
+    fromBlocks [] <span class="fu">=</span> []
+
+<span class="co">-- | Convert blocks to dice</span>
+<span class="ot">encodeBlocks ::</span> <span class="dt">Iso&#39;</span> [<span class="dt">Block</span>] [<span class="dt">Die</span>]
+encodeBlocks <span class="fu">=</span> iso encode decode <span class="kw">where</span>
+    encode (b <span class="fu">:</span> bs) <span class="fu">=</span> <span class="kw">case</span> b <span class="fu">^?</span> encodeBlock <span class="kw">of</span>
+        <span class="dt">Just</span> r <span class="ot">-&gt;</span> r <span class="fu">++</span> encode bs
+        <span class="dt">Nothing</span> <span class="ot">-&gt;</span> encode (recons <span class="fu">$</span> b <span class="fu">:</span> bs)
+    encode [] <span class="fu">=</span> []
+    decode bs
+        <span class="fu">|</span> length bs <span class="fu">&gt;=</span> <span class="dv">9</span> <span class="fu">=</span> (review encodeBlock <span class="fu">$</span> take <span class="dv">9</span> bs) <span class="fu">:</span> decode (drop <span class="dv">9</span> bs)
+        <span class="fu">|</span> length bs <span class="fu">==</span> <span class="dv">0</span> <span class="fu">=</span> []
+        <span class="fu">|</span> otherwise <span class="fu">=</span> error <span class="st">&quot;extra bits&quot;</span>
+
+<span class="co">-- | Prepend an element to blocks</span>
+<span class="ot">consBlock ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Block</span>] <span class="ot">-&gt;</span> [<span class="dt">Block</span>]
+consBlock x [] <span class="fu">=</span> [<span class="dt">Unit</span> x]
+consBlock x (<span class="dt">Unit</span> y<span class="fu">:</span>ts) <span class="fu">=</span> <span class="dt">Pair</span> x y <span class="fu">:</span> ts
+consBlock x (<span class="dt">Pair</span> y z<span class="fu">:</span>zs) <span class="fu">=</span> <span class="dt">Triad</span> x y z <span class="fu">:</span> zs
+consBlock x (<span class="dt">Triad</span> y z w <span class="fu">:</span> ws) <span class="fu">=</span> <span class="dt">Triad</span> x y z <span class="fu">:</span> consBlock w ws
+
+<span class="co">-- | Remove triads in the head</span>
+recons (<span class="dt">Triad</span> x y z <span class="fu">:</span> xs) <span class="fu">=</span> <span class="dt">Pair</span> x y <span class="fu">:</span> consBlock z xs
+recons xs <span class="fu">=</span> xs
+
+<span class="co">-- | Convert blocks to dice</span>
+<span class="ot">encodeBlock ::</span> <span class="dt">Prism&#39;</span> <span class="dt">Block</span> [<span class="dt">Die</span>]
+encodeBlock <span class="fu">=</span> prism&#39; decode encode <span class="kw">where</span>
+    encode (<span class="dt">Triad</span> x y z) <span class="fu">=</span> (x <span class="fu">*</span> <span class="dv">86</span> <span class="fu">^</span> <span class="dv">2</span> <span class="fu">+</span> y <span class="fu">*</span> <span class="dv">86</span> <span class="fu">+</span> z <span class="fu">+</span> <span class="dv">86</span> <span class="fu">^</span> <span class="dv">2</span> <span class="fu">-</span> <span class="dv">1</span>) <span class="fu">^?</span> _<span class="dt">Int_Die</span>
+    encode (<span class="dt">Pair</span> x y) <span class="fu">=</span> ((x <span class="fu">+</span> <span class="dv">1</span>) <span class="fu">*</span> <span class="dv">86</span> <span class="fu">+</span> y) <span class="fu">^?</span> _<span class="dt">Int_Die</span>
+    encode (<span class="dt">Unit</span> x) <span class="fu">=</span> x <span class="fu">^?</span> _<span class="dt">Int_Die</span>
+    decode bs
+        <span class="fu">|</span> n <span class="fu">&lt;</span> <span class="dv">86</span> <span class="fu">=</span> <span class="dt">Unit</span> n
+        <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">Pair</span> (div n <span class="dv">86</span> <span class="fu">-</span> <span class="dv">1</span>) (mod n <span class="dv">86</span>)
+        <span class="kw">where</span>
+            n <span class="fu">=</span> review _<span class="dt">Int_Die</span> bs
+
+<span class="co">-- | Convert an integer to dice</span>
+_<span class="dt">Int_Die</span><span class="ot"> ::</span> <span class="dt">Prism&#39;</span> <span class="dt">Int</span> [<span class="dt">Die</span>]
+_<span class="dt">Int_Die</span> <span class="fu">=</span> prism&#39; (foldr (\x r <span class="ot">-&gt;</span> r <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> fromEnum x) <span class="dv">0</span>) (enc <span class="dv">9</span>) <span class="kw">where</span>
+    enc m n
+        <span class="fu">|</span> m <span class="fu">&lt;</span> <span class="dv">0</span> <span class="fu">=</span> <span class="dt">Nothing</span>
+        <span class="fu">|</span> n <span class="fu">==</span> <span class="dv">0</span> <span class="fu">=</span> <span class="dt">Just</span> (replicate m <span class="dt">D5</span>)
+        <span class="fu">|</span> otherwise <span class="fu">=</span> (toEnum (mod n <span class="dv">3</span>)<span class="fu">:</span>) <span class="fu">&lt;$&gt;</span> enc (m <span class="fu">-</span> <span class="dv">1</span>) (div n <span class="dv">3</span>)
+
+<span class="co">-- | Representation of dice</span>
+_<span class="dt">ReprDie</span><span class="ot"> ::</span> <span class="dt">Iso&#39;</span> <span class="dt">Die</span> <span class="dt">Char</span>
+_<span class="dt">ReprDie</span> <span class="fu">=</span> iso encode decode <span class="kw">where</span>
+    encode <span class="dt">D1</span> <span class="fu">=</span> <span class="ch">&#39;1&#39;</span>
+    encode <span class="dt">D5</span> <span class="fu">=</span> <span class="ch">&#39;2&#39;</span>
+    encode <span class="dt">D2</span> <span class="fu">=</span> <span class="ch">&#39;5&#39;</span>
+    decode <span class="ch">&#39;1&#39;</span> <span class="fu">=</span> <span class="dt">D1</span>
+    decode <span class="ch">&#39;2&#39;</span> <span class="fu">=</span> <span class="dt">D2</span>
+    decode <span class="ch">&#39;5&#39;</span> <span class="fu">=</span> <span class="dt">D5</span>
+    decode _ <span class="fu">=</span> error <span class="st">&quot;Illegal character: expecting 1, 2, 5&quot;</span>
+
+_<span class="dt">Lines</span><span class="ot"> ::</span> <span class="dt">Iso&#39;</span> <span class="dt">String</span> [<span class="dt">String</span>]
+_<span class="dt">Lines</span> <span class="fu">=</span> iso lines unlines
+
+main <span class="fu">=</span> <span class="kw">do</span>
+    args <span class="ot">&lt;-</span> getArgs
+    <span class="kw">let</span> f <span class="fu">=</span> interact <span class="fu">.</span> over _<span class="dt">Lines</span> <span class="fu">.</span> view <span class="fu">.</span> mapping
+    <span class="kw">case</span> args <span class="kw">of</span>
+         (<span class="st">&quot;encode&quot;</span><span class="fu">:</span>_) <span class="ot">-&gt;</span> f (_<span class="dt">Stream</span> <span class="fu">.</span> mapping _<span class="dt">ReprDie</span>)
+         (<span class="st">&quot;decode&quot;</span><span class="fu">:</span>_) <span class="ot">-&gt;</span> f (from (_<span class="dt">Stream</span> <span class="fu">.</span> mapping _<span class="dt">ReprDie</span>))
+         _ <span class="ot">-&gt;</span> putStrLn <span class="st">&quot;Usage: encoder [encode|decode]&quot;</span></code></pre>
+<h2 id="result.h">Result.h</h2>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">﻿#ifndef RESULT_H
+<span class="ot">#define RESULT_H</span>
+
+<span class="ot">#include&lt;Siv3D.hpp&gt;</span>
+<span class="ot">#include&quot;AnalyzePacket.h&quot;</span>
+
+<span class="kw">class</span> Die{
+<span class="kw">public</span>:
+    <span class="dt">int</span> Roll;
+    <span class="dt">int</span> ChangedRoll;
+    Point LeftTop, RightBottom;
+    Font font;
+
+    Die(){
+        Roll = <span class="dv">0</span>;
+        ChangedRoll = <span class="dv">0</span>;
+        LeftTop = Point(<span class="dv">50</span>,<span class="dv">0</span>);
+        RightBottom = Point(<span class="dv">50</span>,<span class="dv">0</span>);
+        font = Font(<span class="dv">12</span>);
+    };
+
+    <span class="dt">void</span> SetDie(<span class="dt">int</span> roll, Point lefttop, Point rightbottom){
+        Roll = roll;
+        ChangedRoll = Roll;
+        LeftTop = lefttop;
+        RightBottom = rightbottom;
+    };
+
+    <span class="dt">void</span> DrawRoll(){
+        font.draw(Format()+ChangedRoll, LeftTop.x ,LeftTop.y, Palette::Green);
+    };
+};
+
+<span class="kw">class</span> Result{
+<span class="kw">public</span>:
+    Die BigDice[<span class="dv">5</span>][<span class="dv">9</span>], SmallDice[<span class="dv">2</span>][<span class="dv">14</span>];
+
+    Result(){
+        <span class="kw">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">5</span>; i++){
+            <span class="kw">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; <span class="dv">9</span>; j++){
+                BigDice[i][j] = Die();
+                BigDice[i][j].SetDie(i*<span class="dv">9</span>+j, Point(<span class="dv">50</span>+j*<span class="dv">26</span>,i*<span class="dv">26</span>), Point(<span class="dv">0</span>,<span class="dv">0</span>));
+            }
+        }
+        <span class="kw">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">2</span>; i++){
+            <span class="kw">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; <span class="dv">14</span>; j++){
+                SmallDice[i][j] = Die();
+                SmallDice[i][j].SetDie(i*<span class="dv">14</span>+j<span class="dv">+45</span>, Point(<span class="dv">50</span>+j*<span class="dv">26</span>,(i<span class="dv">+5</span>)*<span class="dv">26</span>), Point(<span class="dv">0</span>,<span class="dv">0</span>));
+            }
+        }
+    };
+
+    <span class="dt">void</span> Result_Set(std::vector&lt;std::pair&lt;Coord, <span class="dt">int</span>&gt;&gt; result){
+        <span class="kw">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">5</span>; i++){
+            <span class="kw">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; <span class="dv">9</span>; j++){
+                <span class="co">//BigDice[i][j].SetDie(result[i*9 + j].second, Point(result[i*9 + j].first.first, result[i*9 + j].first.second), Point(0,0));</span>
+                BigDice[i][j].SetDie(result[i*<span class="dv">9</span> + j].second, Point(<span class="dv">50</span>+j*<span class="dv">26</span>,i*<span class="dv">26</span>), Point(<span class="dv">0</span>,<span class="dv">0</span>));
+            }
+        }
+        <span class="kw">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">2</span>; i++){
+            <span class="kw">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; <span class="dv">14</span>; j++){
+                <span class="co">//SmallDice[i][j].SetDie(result[i*14 + j + 45].second, Point(result[i*14 + j + 45].first.first, result[i*14 + j + 45].first.second), Point(0,0));</span>
+                SmallDice[i][j].SetDie(result[i*<span class="dv">14</span> + j + <span class="dv">45</span>].second, Point(<span class="dv">50</span>+j*<span class="dv">26</span>,(i<span class="dv">+5</span>)*<span class="dv">26</span>), Point(<span class="dv">0</span>,<span class="dv">0</span>));
+            }
+        }
+    };
+
+    <span class="dt">void</span> DrawPacket(){
+        <span class="kw">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">5</span>; i++){
+            <span class="kw">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; <span class="dv">9</span>; j++){
+                BigDice[i][j].DrawRoll();
+            }
+        }
+        <span class="kw">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">2</span>; i++){
+            <span class="kw">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; <span class="dv">14</span>; j++){
+                SmallDice[i][j].DrawRoll();
+            }
+        }
+    };
+
+    <span class="co">// デバッグ用</span>
+    <span class="dt">void</span> DrawPacket2(){
+        <span class="dt">int</span> counter = <span class="dv">0</span>;
+        <span class="kw">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">5</span>; i++){
+            <span class="kw">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; <span class="dv">9</span>; j++){
+                BigDice[i][j].font.draw(Format()+BigDice[i*<span class="dv">9</span>][j].ChangedRoll, <span class="dv">50</span>+counter*<span class="dv">20</span>, <span class="dv">0</span>, Palette::Green);
+                counter++;
+            }
+        }
+        <span class="kw">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">2</span>; i++){
+            <span class="kw">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; <span class="dv">14</span>; j++){
+                SmallDice[i][j].font.draw(Format()+SmallDice[i*<span class="dv">14</span>][j].ChangedRoll, <span class="dv">50</span>+counter*<span class="dv">20</span>, <span class="dv">0</span>, Palette::Green);
+                counter++;
+            }
+        }
+    };
+
+
+};
+
+<span class="ot">#endif</span></code></pre>
+<h2 id="openimage.h">OpenImage.h</h2>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">﻿#ifndef OPENIMAGE_H
+<span class="ot">#define OPENIMAGE_H</span>
+
+<span class="ot">#include&lt;Siv3D.hpp&gt;</span>
+
+<span class="kw">class</span> OpenImage
+{
+<span class="kw">public</span>:
+    Image image;
+    Texture texture;
+    Font font;
+    Rect OpenButton, AnalyzeButton, DecodeButton;
+    <span class="dt">bool</span> tex;
+
+    OpenImage(){
+        font = Font(<span class="dv">10</span>);
+        OpenButton = Rect(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">50</span>,<span class="dv">50</span>);
+        AnalyzeButton = Rect(<span class="dv">0</span>, <span class="dv">50</span>, <span class="dv">50</span>, <span class="dv">50</span>);
+        DecodeButton = Rect(<span class="dv">0</span>, <span class="dv">100</span>, <span class="dv">50</span>, <span class="dv">50</span>);
+        tex = <span class="kw">false</span>;
+    };
+
+    <span class="dt">bool</span> ButtonClicke(){
+        <span class="kw">if</span>(OpenButton.leftClicked){
+            image = Dialog::OpenImage();
+            texture = Texture(image);
+            tex = <span class="kw">true</span>;
+            <span class="kw">return</span> <span class="kw">false</span>;
+        }
+        <span class="kw">else</span> <span class="kw">if</span>(AnalyzeButton.leftClicked){
+            <span class="kw">return</span> <span class="kw">true</span>;
+        }
+        <span class="kw">return</span> <span class="kw">false</span>;
+    };
+
+    <span class="dt">void</span> Draw(){
+        OpenButton.draw(Palette::Brown);
+        font.draw(L<span class="st">&quot;画像を</span><span class="ch">\n</span><span class="st">開く&quot;</span>, <span class="dv">2</span>,<span class="dv">2</span>, Palette::Azure);
+        AnalyzeButton.draw(Palette::Red);
+        font.draw(L<span class="st">&quot;画像を</span><span class="ch">\n</span><span class="st">解析&quot;</span>, <span class="dv">2</span>, <span class="dv">52</span>, Palette::Azure);
+        DecodeButton.draw(Palette::Blueviolet);
+        font.draw(L<span class="st">&quot;デコー</span><span class="ch">\n</span><span class="st">ド&quot;</span>, <span class="dv">2</span>, <span class="dv">102</span>, Palette::Azure);
+
+        
+        <span class="kw">if</span>(tex &amp;&amp; texture != NULL)
+            texture.scale(<span class="fl">0.5</span>).draw(<span class="dv">50</span>,<span class="dv">0</span>);
+    };
+};
+
+<span class="ot">#endif</span></code></pre>
+<h2 id="main.cpp">Main.cpp</h2>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">﻿#include &lt;Siv3D.hpp&gt;
+<span class="ot">#include&quot;BaseInfo.h&quot;</span>
+<span class="ot">#include&quot;OpenImage.h&quot;</span>
+<span class="ot">#include&quot;GridChoice.h&quot;</span>
+<span class="ot">#include&quot;AnalyzePacket.h&quot;</span>
+<span class="ot">#include&quot;Result.h&quot;</span>
+
+
+<span class="dt">void</span> Main()
+{
+    OpenImage appOpenImage = OpenImage();
+    GridChoice appGridChoice = GridChoice();
+    Result appResult = Result();
+    <span class="co">//PacketImage packet;</span>
+
+    Window::SetTitle(L<span class="st">&quot;TRIDE HC++&quot;</span>);
+    Window::Resize(WindowWidth,WindowHeight);
+
+    Graphics::SetBackGround(Slategray);
+
+    <span class="kw">while</span>(System::Update())
+    {
+        <span class="kw">if</span>(appOpenImage.ButtonClicke() == <span class="kw">true</span> &amp;&amp; appGridChoice.PointRight()){
+            PacketImage packet = PacketImage(appOpenImage.image);
+            std::vector&lt;std::pair&lt;Coord, <span class="dt">int</span>&gt;&gt; result = packet.analyzePacket(appGridChoice.Ra.x, appGridChoice.Ra.y, appGridChoice.Rb.x, appGridChoice.Rb.y);
+            
+            appResult.Result_Set(result);
+        
+        }
+
+        appGridChoice.Position2();
+
+        appGridChoice.DrawBack();
+        appOpenImage.Draw();
+        appGridChoice.DrawGridCoordinate();
+
+        appResult.DrawPacket();
+        
+        appGridChoice.DrawGrid();
+    }
+}</code></pre>
+<h2 id="gridchoice.h">GridChoice.h</h2>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">﻿#ifndef GRIDCHOICE_H
+<span class="ot">#define GRIDCHOICE_H</span>
+
+<span class="ot">#include&lt;Siv3D.hpp&gt;</span>
+<span class="ot">#include&quot;BaseInfo.h&quot;</span>
+
+<span class="kw">class</span> GridChoice
+{
+<span class="kw">public</span>:
+    Rect backrect;
+    Point a,b; <span class="co">//ツール上での座標</span>
+    Point Ra, Rb; <span class="co">//画像上での座標</span>
+    <span class="dt">bool</span> leftPress;
+
+    GridChoice(){
+        backrect = Rect(<span class="dv">50</span>,<span class="dv">0</span>,WindowWidth,WindowHeight);
+        leftPress = <span class="kw">false</span>;
+        a = Point(<span class="dv">50</span>,<span class="dv">0</span>); b = Point(<span class="dv">50</span>,<span class="dv">0</span>);
+        Ra = Point(<span class="dv">0</span>,<span class="dv">0</span>); Rb = Point(<span class="dv">0</span>,<span class="dv">0</span>);
+    };
+
+    <span class="dt">void</span> Position1(){
+        <span class="kw">if</span>(backrect.leftPressed){
+            a = Mouse::Pos();
+            Ra.x = (a.x<span class="dv">-50</span>)*<span class="dv">2</span>;
+            Ra.y = a.y*<span class="dv">2</span>;
+        }
+        <span class="kw">if</span>(backrect.rightPressed){
+            b = Mouse::Pos();
+            Rb.x = (b.x<span class="dv">-50</span>)*<span class="dv">2</span>;
+            Rb.y = b.y*<span class="dv">2</span>;
+        }
+    };
+
+    <span class="dt">void</span> Position2(){
+        <span class="kw">if</span>(backrect.leftClicked){
+            a = Mouse::Pos();
+            Ra.x = (a.x<span class="dv">-50</span>)*<span class="dv">2</span>;
+            Ra.y = a.y*<span class="dv">2</span>;
+            leftPress = <span class="kw">true</span>;
+        }
+        <span class="kw">if</span>(leftPress){
+            b = Mouse::Pos();
+            Rb.x = (b.x<span class="dv">-50</span>)*<span class="dv">2</span>;
+            Rb.y = b.y*<span class="dv">2</span>;
+            <span class="kw">if</span>(backrect.leftPressed == <span class="kw">false</span>) leftPress = <span class="kw">false</span>;
+        }       
+    };
+
+    <span class="dt">void</span> DrawBack(){
+        backrect.draw(Palette::Black);
+    };
+
+    <span class="dt">void</span> DrawGrid(){
+        <span class="co">/*if(a.x != NULL)*/</span> Circle(a, <span class="dv">5</span>).draw(Palette::Red);
+        <span class="co">/*if(b.x != NULL)*/</span> Circle(b, <span class="dv">5</span>).draw(Palette::Blue);
+        <span class="co">/*if(a.x != NULL &amp;&amp; b.x != NULL)*/</span>
+        Rect(a.x, a.y, b.x-a.x, b.y-a.y).drawFrame(<span class="dv">1</span>,<span class="dv">0</span>,Palette::Red);
+        Rect(a.x<span class="dv">-1</span>, a.y<span class="dv">-1</span>, b.x-a.x<span class="dv">+2</span>, b.y-a.y<span class="dv">+2</span>).drawFrame(<span class="dv">1</span>,<span class="dv">0</span>,Palette::Blue);
+    };
+    
+    <span class="dt">void</span> DrawGridCoordinate(){
+        <span class="dt">const</span> Font CooaF(<span class="dv">10</span>), CoobF(<span class="dv">10</span>);
+        String CooaS = Format() + L<span class="st">&quot;(&quot;</span> + Ra.x + <span class="st">&quot;,&quot;</span> + Ra.y + L<span class="st">&quot;)&quot;</span>;
+        String CoobS = Format() + L<span class="st">&quot;(&quot;</span> + Rb.x + <span class="st">&quot;,&quot;</span> + Rb.y + L<span class="st">&quot;)&quot;</span>;
+        
+        CooaF.draw(CooaS, <span class="dv">2</span>, WindowHeight<span class="dv">-40</span>, Palette::Red);
+        CooaF.draw(CoobS, <span class="dv">2</span>, WindowHeight<span class="dv">-20</span>, Palette::Blue);
+    };
+
+    <span class="dt">void</span> ThrowGridPoint(Point *A, Point *B){
+        *A = a;
+        *B = b;
+    };
+
+    <span class="dt">bool</span> PointRight(){
+        <span class="kw">if</span>(a.x &lt; <span class="dv">0</span> || a.y &lt; <span class="dv">0</span> || b.x &gt; WindowWidth || b.y &gt; WindowHeight || 
+            (a == b) || a.x &gt; b.x || a.y &gt; b.y) <span class="kw">return</span> <span class="kw">false</span>;
+        <span class="kw">else</span> <span class="kw">return</span> <span class="kw">true</span>;
+    };
+};
+
+<span class="ot">#endif</span></code></pre>
+<h2 id="baseinfo.h">BaseInfo.h</h2>
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="ot">#define WindowWidth (960+50)</span>
+
+<span class="ot">#define WindowHeight 540</span></code></pre>
+<h2 id="analyzepacket.h">AnalyzePacket.h</h2>
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="ot">#ifndef AnalyzePacket_H</span>
+<span class="ot">#define AnalyzePacket_H</span>
+
+<span class="ot">#include&lt;Siv3D.hpp&gt;</span>
+
+<span class="kw">class</span> RGB{
+    <span class="kw">public</span>:
+        <span class="dt">char</span> r, g, b;
+        RGB();
+        RGB(<span class="dt">char</span> r, <span class="dt">char</span> g, <span class="dt">char</span> b);
+        <span class="dt">float</span> Brightness();
+        <span class="dt">float</span> Dot(RGB x);
+        <span class="dt">float</span> Distance(RGB x);
+};
+
+<span class="kw">typedef</span> std::pair&lt; <span class="dt">int</span>, <span class="dt">int</span>&gt;  Coord;
+
+<span class="kw">class</span> PacketImage{
+    <span class="kw">public</span>:
+        Image image;
+        PacketImage(<span class="dt">void</span>);
+        PacketImage(Image src);
+        
+        RGB criterion1;
+        RGB criterion2;
+        RGB criterion5;
+
+        <span class="dt">void</span> calculateCriteria();
+        RGB colorAverage(<span class="dt">int</span> xCoordinate, <span class="dt">int</span> yCoordinate, <span class="dt">int</span> diceSize);
+        <span class="dt">int</span> decideRoll(RGB average);
+        std::vector&lt;std::pair&lt;Coord, <span class="dt">int</span>&gt;&gt; analyzePacket(<span class="dt">const</span> <span class="dt">int</span> left, <span class="dt">const</span> <span class="dt">int</span> top, <span class="dt">const</span> <span class="dt">int</span> right, <span class="dt">const</span> <span class="dt">int</span> bottom);
+};
+
+<span class="ot">#endif</span></code></pre>
+<h2 id="analyzepacket.cpp">AnalyzePacket.cpp</h2>
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">/*</span>
+<span class="co">encoding: UTF-8</span>
+
+<span class="co">各グリッドの中央部の平均値が算出可能。</span>
+<span class="co">*/</span>
+
+<span class="ot">#include &quot;AnalyzePacket.h&quot;</span>
+<span class="ot">#include &lt;stdio.h&gt;</span>
+<span class="ot">#include &lt;iostream&gt;</span>
+
+RGB::RGB(){
+    r=<span class="dv">0</span>;
+    g=<span class="dv">0</span>;
+    b=<span class="dv">0</span>;
+}
+
+RGB::RGB(<span class="dt">char</span> _r, <span class="dt">char</span> _g, <span class="dt">char</span> _b)
+{
+    r = _r;
+    g = _g;
+    b = _b;
+}
+
+<span class="dt">float</span> RGB::Brightness()
+{
+    <span class="kw">return</span> ((<span class="dt">float</span>)r + (<span class="dt">float</span>)g + (<span class="dt">float</span>)b) / <span class="dv">256</span> / <span class="dv">3</span>;
+}
+
+<span class="dt">float</span> RGB::Dot(RGB x)
+{
+    <span class="kw">return</span> ((<span class="dt">float</span>)r * (<span class="dt">float</span>)x.r + (<span class="dt">float</span>)g * (<span class="dt">float</span>)x.g + (<span class="dt">float</span>)b * (<span class="dt">float</span>)x.b) / <span class="dv">256</span>;
+}
+<span class="dt">float</span> RGB::Distance(RGB x)
+{
+    <span class="dt">float</span> dr = (<span class="dt">float</span>)(r - x.r), dg = (<span class="dt">float</span>)(g - x.g), db = (<span class="dt">float</span>)(b - x.b);
+    <span class="kw">return</span> dr * dr + dg * dg + db * db;
+}
+
+PacketImage::PacketImage(<span class="dt">void</span>){
+    image = Dialog::OpenImage();
+    calculateCriteria();
+}
+
+PacketImage::PacketImage(Image src){
+    image = src;
+    calculateCriteria();
+}
+
+<span class="dt">void</span> PacketImage::calculateCriteria()
+{
+    <span class="co">// TODO: Actually calculate</span>
+    criterion1 = RGB(<span class="dv">255</span>, <span class="dv">0</span>, <span class="dv">0</span>);
+    criterion2 = RGB(<span class="dv">255</span>, <span class="dv">255</span>, <span class="dv">255</span>);
+    criterion5 = RGB(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>);
+}
+
+RGB PacketImage::colorAverage(<span class="dt">int</span> tx, <span class="dt">int</span> ty, <span class="dt">int</span> radius){
+
+    <span class="dt">unsigned</span> <span class="dt">long</span> <span class="dt">int</span> accumR = <span class="dv">0</span>, accumG = <span class="dv">0</span>, accumB = <span class="dv">0</span>;
+
+    <span class="dt">int</span> n = <span class="dv">0</span>;
+
+    <span class="kw">for</span>(<span class="dt">int</span> x= -radius; x &lt; radius; x++){
+        <span class="kw">for</span>(<span class="dt">int</span> y = -radius; y &lt; radius; y++){
+            <span class="kw">if</span> (x * x + y * y &lt; radius * radius)
+            {
+                Color p = image.getPixel(ty + y, tx + x); <span class="co">// Note that getPixel takes (y, x)</span>
+                accumR += p.r;
+                accumG += p.g;
+                accumB += p.b;
+                n++;
+            }
+        }
+
+    }
+    <span class="kw">return</span> RGB((<span class="dt">char</span>)(accumR / n), (<span class="dt">char</span>)(accumG / n), (<span class="dt">char</span>)(accumB / n));
+}
+
+
+<span class="dt">int</span> PacketImage::decideRoll(RGB average){
+
+    <span class="dt">float</span> d1 = average.Distance(criterion1), d2 = average.Distance(criterion2), d5 = average.Distance(criterion5);
+    <span class="co">//result = Format() + result + &quot;\nave.r = &quot; + average.r + &quot;\nave.g = &quot; + average.g + &quot;\nave.b = &quot; + average.b;</span>
+    <span class="kw">if</span>(d1 &lt; d2){
+        <span class="kw">return</span> (d5 &lt; d1) ? <span class="dv">5</span> : <span class="dv">1</span>;
+    }
+    <span class="kw">else</span> {
+        <span class="kw">return</span> (d5 &lt; d2) ? <span class="dv">5</span> : <span class="dv">2</span>;
+    }
+}
+
+std::vector&lt;std::pair&lt;Coord, <span class="dt">int</span>&gt;&gt; PacketImage::analyzePacket(<span class="dt">const</span> <span class="dt">int</span> left, <span class="dt">const</span> <span class="dt">int</span> top, <span class="dt">int</span> right, <span class="dt">int</span> bottom){
+    <span class="dt">const</span> <span class="dt">int</span> packetWidth = right - left;
+    <span class="dt">const</span> <span class="dt">int</span> packetHeight = bottom - top;
+
+    <span class="dt">double</span> mediumSize = (<span class="dt">double</span>)packetHeight / <span class="fl">10.0</span>;
+    <span class="dt">double</span> largeSize  = mediumSize * <span class="fl">1.6</span>; 
+
+    <span class="co">//result = Format() + result + L&quot;\nlefttopX = &quot; + lefttopX + &quot; mSize = &quot; + mediumSize;</span>
+
+    <span class="dt">double</span> DiceSize;
+    <span class="dt">int</span> DiceColumns;
+    <span class="dt">const</span> <span class="dt">int</span> DiceRows = <span class="dv">7</span>;
+    <span class="dt">double</span> y = (<span class="dt">double</span>)top;
+    std::vector&lt;std::pair&lt;Coord, <span class="dt">int</span>&gt;&gt; result(<span class="dv">90</span>);
+
+    <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>; i&lt;DiceRows; i++, y+=DiceSize){
+        <span class="kw">if</span>(i &lt; <span class="dv">5</span>){
+            DiceSize = largeSize;
+            DiceColumns = <span class="dv">9</span>;
+        }
+        <span class="kw">else</span> <span class="kw">if</span>(i &gt;= <span class="dv">5</span>){
+            DiceSize = mediumSize;
+            DiceColumns = <span class="dv">14</span>;
+        }
+        <span class="dt">double</span> x = (<span class="dt">double</span>)top;
+        <span class="kw">for</span>(<span class="dt">int</span> j=<span class="dv">0</span>; j&lt;DiceColumns; j++, x+=DiceSize){
+            result.push_back(std::pair&lt;Coord, <span class="dt">int</span>&gt;(Coord(x, y), (decideRoll( colorAverage(x + (<span class="dt">int</span>)(DiceSize / <span class="dv">2</span>), (<span class="dt">int</span>)(y + DiceSize / <span class="dv">2</span>), (<span class="dt">int</span>)(DiceSize/<span class="fl">3.0</span>))))));
+        }
+    }
+    <span class="kw">return</span> result;
+
+}
+
+
+</body>
+</html>

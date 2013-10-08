@@ -1,3 +1,5 @@
+# 
+
 ## preview.hs
 
 ```haskell
@@ -228,11 +230,12 @@ public:
 	Die(){
 		Roll = 0;
 		ChangedRoll = 0;
-		LeftTop = Point(0,0);			;
-		RightBottom = Point(0,0);
-	}
+		LeftTop = Point(50,0);
+		RightBottom = Point(50,0);
+		font = Font(12);
+	};
 
-	Die(int roll, Point lefttop, Point rightbottom){
+	void SetDie(int roll, Point lefttop, Point rightbottom){
 		Roll = roll;
 		ChangedRoll = Roll;
 		LeftTop = lefttop;
@@ -240,7 +243,7 @@ public:
 	};
 
 	void DrawRoll(){
-		font.draw(ChangedRoll, LeftTop.x ,LeftTop.y, Palette::Green);
+		font.draw(Format()+ChangedRoll, LeftTop.x ,LeftTop.y, Palette::Green);
 	};
 };
 
@@ -248,19 +251,35 @@ class Result{
 public:
 	Die BigDice[5][9], SmallDice[2][14];
 
-	void Result_Set(int *AnalyzedPacket){
-		int *Packet = AnalyzedPacket;
+	Result(){
 		for(int i = 0; i < 5; i++){
 			for(int j = 0; j < 9; j++){
-				Die(Packet[i*9 + j], Point(50+j*50,i*50), Point(0,0));
+				BigDice[i][j] = Die();
+				BigDice[i][j].SetDie(i*9+j, Point(50+j*26,i*26), Point(0,0));
 			}
 		}
 		for(int i = 0; i < 2; i++){
 			for(int j = 0; j < 14; j++){
-				Die(Packet[i*14 + j - 45], Point(50+j*50, (i+5)*50), Point(0,0));
+				SmallDice[i][j] = Die();
+				SmallDice[i][j].SetDie(i*14+j+45, Point(50+j*26,(i+5)*26), Point(0,0));
 			}
 		}
-	}
+	};
+
+	void Result_Set(std::vector<std::pair<Coord, int>> result){
+		for(int i = 0; i < 5; i++){
+			for(int j = 0; j < 9; j++){
+				//BigDice[i][j].SetDie(result[i*9 + j].second, Point(result[i*9 + j].first.first, result[i*9 + j].first.second), Point(0,0));
+				BigDice[i][j].SetDie(result[i*9 + j].second, Point(50+j*26,i*26), Point(0,0));
+			}
+		}
+		for(int i = 0; i < 2; i++){
+			for(int j = 0; j < 14; j++){
+				//SmallDice[i][j].SetDie(result[i*14 + j + 45].second, Point(result[i*14 + j + 45].first.first, result[i*14 + j + 45].first.second), Point(0,0));
+				SmallDice[i][j].SetDie(result[i*14 + j + 45].second, Point(50+j*26,(i+5)*26), Point(0,0));
+			}
+		}
+	};
 
 	void DrawPacket(){
 		for(int i = 0; i < 5; i++){
@@ -274,6 +293,24 @@ public:
 			}
 		}
 	};
+
+	// デバッグ用
+	void DrawPacket2(){
+		int counter = 0;
+		for(int i = 0; i < 5; i++){
+			for(int j = 0; j < 9; j++){
+				BigDice[i][j].font.draw(Format()+BigDice[i*9][j].ChangedRoll, 50+counter*20, 0, Palette::Green);
+				counter++;
+			}
+		}
+		for(int i = 0; i < 2; i++){
+			for(int j = 0; j < 14; j++){
+				SmallDice[i][j].font.draw(Format()+SmallDice[i*14][j].ChangedRoll, 50+counter*20, 0, Palette::Green);
+				counter++;
+			}
+		}
+	};
+
 
 };
 
@@ -294,18 +331,19 @@ public:
 	Image image;
 	Texture texture;
 	Font font;
-	Rect rect, AnalyzeButton;
+	Rect OpenButton, AnalyzeButton, DecodeButton;
 	bool tex;
 
 	OpenImage(){
 		font = Font(10);
-		rect = Rect(0,0,50,50);
+		OpenButton = Rect(0,0,50,50);
 		AnalyzeButton = Rect(0, 50, 50, 50);
+		DecodeButton = Rect(0, 100, 50, 50);
 		tex = false;
 	};
 
 	bool ButtonClicke(){
-		if(rect.leftClicked){
+		if(OpenButton.leftClicked){
 			image = Dialog::OpenImage();
 			texture = Texture(image);
 			tex = true;
@@ -318,10 +356,13 @@ public:
 	};
 
 	void Draw(){
-		rect.draw(Palette::Brown);
+		OpenButton.draw(Palette::Brown);
 		font.draw(L"画像を\n開く", 2,2, Palette::Azure);
 		AnalyzeButton.draw(Palette::Red);
 		font.draw(L"画像を\n解析", 2, 52, Palette::Azure);
+		DecodeButton.draw(Palette::Blueviolet);
+		font.draw(L"デコー\nド", 2, 102, Palette::Azure);
+
 		
 		if(tex && texture != NULL)
 			texture.scale(0.5).draw(50,0);
@@ -364,11 +405,9 @@ void Main()
 	{
 		if(appOpenImage.ButtonClicke() == true && appGridChoice.PointRight()){
 			PacketImage packet = PacketImage(appOpenImage.image);
-            std::vector<int> result = packet.analyzePacket(appGridChoice.Ra.x, appGridChoice.Ra.y, appGridChoice.Rb.x, appGridChoice.Rb.y);
+            std::vector<std::pair<Coord, int>> result = packet.analyzePacket(appGridChoice.Ra.x, appGridChoice.Ra.y, appGridChoice.Rb.x, appGridChoice.Rb.y);
             
-            int raw[90];
-            for (int i = 0; i < 90; i++) raw[i] = result[i];
-            appResult.Result_Set(raw);
+            appResult.Result_Set(result);
 		
         }
 
@@ -377,7 +416,9 @@ void Main()
 		appGridChoice.DrawBack();
 		appOpenImage.Draw();
 		appGridChoice.DrawGridCoordinate();
+
 		appResult.DrawPacket();
+		
 		appGridChoice.DrawGrid();
 	}
 }
@@ -396,13 +437,15 @@ class GridChoice
 {
 public:
 	Rect backrect;
-	Point a,b;
-	Point Ra, Rb;
+	Point a,b; //ツール上での座標
+	Point Ra, Rb; //画像上での座標
 	bool leftPress;
 
 	GridChoice(){
 		backrect = Rect(50,0,WindowWidth,WindowHeight);
 		leftPress = false;
+		a = Point(50,0); b = Point(50,0);
+		Ra = Point(0,0); Rb = Point(0,0);
 	};
 
 	void Position1(){
@@ -450,8 +493,8 @@ public:
 		String CooaS = Format() + L"(" + Ra.x + "," + Ra.y + L")";
 		String CoobS = Format() + L"(" + Rb.x + "," + Rb.y + L")";
 		
-		CooaF.draw(CooaS, 52, WindowHeight-40, Palette::Red);
-		CooaF.draw(CoobS, 52, WindowHeight-20, Palette::Blue);
+		CooaF.draw(CooaS, 2, WindowHeight-40, Palette::Red);
+		CooaF.draw(CoobS, 2, WindowHeight-20, Palette::Blue);
 	};
 
 	void ThrowGridPoint(Point *A, Point *B){
@@ -460,7 +503,8 @@ public:
 	};
 
 	bool PointRight(){
-		if(a.x < 0 || a.y < 0 || b.x > WindowWidth || b.y > WindowHeight) return false;
+		if(a.x < 0 || a.y < 0 || b.x > WindowWidth || b.y > WindowHeight || 
+			(a == b) || a.x > b.x || a.y > b.y) return false;
 		else return true;
 	};
 };
@@ -500,7 +544,9 @@ class RGB{
         float Distance(RGB x);
 };
 
-/gパケット画像関連の情報はここに詰め込む。変数追加の余地あり。
+typedef std::pair< int, int>  Coord;
+
+//パケチE??画像関連の惁E??はここに詰め込む。変数追加の余地あり、E
 class PacketImage{
 	public:
 		Image image;
@@ -514,7 +560,7 @@ class PacketImage{
         void calculateCriteria();
 		RGB colorAverage(int xCoordinate, int yCoordinate, int diceSize);
 		int decideRoll(RGB average);
-		std::vector<int> analyzePacket(const int left, const int top, const int right, const int bottom);
+		std::vector<std::pair<Coord, int>> analyzePacket(const int left, const int top, const int right, const int bottom);
 };
 
 #endif
@@ -614,7 +660,7 @@ int PacketImage::decideRoll(RGB average){
 	}
 }
 
-std::vector<int> PacketImage::analyzePacket(const int left, const int top, int right, int bottom){
+std::vector<std::pair<Coord, int>> PacketImage::analyzePacket(const int left, const int top, int right, int bottom){
 	const int packetWidth = right - left;
 	const int packetHeight = bottom - top;
 
@@ -627,7 +673,7 @@ std::vector<int> PacketImage::analyzePacket(const int left, const int top, int r
 	int DiceColumns;
 	const int DiceRows = 7;
 	double y = (double)top;
-    std::vector<int> result(90);
+    std::vector<std::pair<Coord, int>> result(90);
 
 	for(int i=0; i<DiceRows; i++, y+=DiceSize){
 		if(i < 5){
@@ -640,7 +686,7 @@ std::vector<int> PacketImage::analyzePacket(const int left, const int top, int r
 		}
 		double x = (double)top;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
-			result.push_back(decideRoll( colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize/3.0))));
+			result.push_back(std::pair<Coord, int>(Coord(x, y), (decideRoll( colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize/3.0))))));
 		}
 	}
     return result;
