@@ -30,7 +30,7 @@ class PacketImage{
         void calculateCriteria(int redX, int redY, int whiteX, int whiteY, int blackX, int blackY);
 		RGB colorAverage(int xCoordinate, int yCoordinate, int diceSize);
 		int decideRoll(RGB average);
-		std::vector<std::pair<s3d::Rect, int>> analyzePacket(const int left, const int top, const int right, const int bottom);
+		std::vector<std::pair<s3d::Rect, RGB>> analyzePacket(const int left, const int top, const int right, const int bottom);
 };
 
 #endif

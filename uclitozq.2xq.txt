@@ -1,0 +1,19 @@
+﻿
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# HEAD detached at e00169b
+# You are currently rebasing branch 'master' on 'e00169b'.
+#   (all conflicts fixed: run "git rebase --continue")
+#
+# Changes to be committed: Update DrawResult
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#	modified:   ui/procon/AnalyzePacket.cpp
+#	modified:   ui/procon/GridChoice.h
+#	modified:   ui/procon/Main.cpp
+#	modified:   ui/procon/Result.h
+#	modified:   ui/procon/SideButton.h
+#	modified:   ui/procon/procon.vcxproj
+#	modified:   ui/procon/procon.vcxproj.filters
+#	modified:   ui/procon/procon_log.html
+#

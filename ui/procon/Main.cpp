@@ -14,6 +14,7 @@ void Main()
 	Result appResult = Result();
 	SideButton appSideButton = SideButton();
 	PacketImage packet = PacketImage();
+	std::vector<std::pair<s3d::Rect, RGB>> result;
 
 	Window::SetTitle(L"TRIDE HC++");
 	Window::Resize(WindowWidth,WindowHeight);
@@ -30,12 +31,11 @@ void Main()
 				appGridChoice.RColorGrid[1].x, appGridChoice.RColorGrid[1].y,
 				appGridChoice.RColorGrid[2].x, appGridChoice.RColorGrid[2].y);
 
-            std::vector<std::pair<s3d::Rect, int>> result 
-				= packet.analyzePacket(appGridChoice.Rlt.x, appGridChoice.Rlt.y, appGridChoice.Rrb.x, appGridChoice.Rrb.y);
+            result = packet.analyzePacket(appGridChoice.Rlt.x, appGridChoice.Rlt.y, appGridChoice.Rrb.x, appGridChoice.Rrb.y);
             
 			Point a, b;
 			appGridChoice.ThrowGridPoint(&a, &b);
-            appResult.Result_Set(result, a);
+            appResult.Result_Set(result, a, packet);
 		
         }
 		
@@ -54,7 +54,7 @@ void Main()
 		appGridChoice.DrawGridCoordinate();
 		appGridChoice.DrawColorGrid();
 
-		appResult.DrawPacket();
+		appResult.DrawPacket(result);
 		
 		appGridChoice.DrawGrid();
 	}
