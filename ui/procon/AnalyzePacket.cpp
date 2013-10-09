@@ -124,8 +124,7 @@ std::vector<std::pair<s3d::Rect, RGB>> PacketImage::analyzePacket(const int left
 		double x = (double)left;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
             result.push_back(std::pair<s3d::Rect, RGB>(Rect(x, y, DiceSize, DiceSize)
-                , (colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 7.0)))));
-		}
+                , (colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 5.0)))));
 	}
     return result;
 
