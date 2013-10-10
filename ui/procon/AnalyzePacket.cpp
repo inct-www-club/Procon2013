@@ -37,7 +37,7 @@ float RGB::Distance(RGB x)
 }
 
 PacketImage::PacketImage(void){
-	image = Dialog::OpenImage();
+	//image = Dialog::OpenImage();
     calculateCriteria();
 }
 
@@ -98,7 +98,7 @@ int PacketImage::decideRoll(RGB average){
 	}
 }
 
-std::vector<std::pair<s3d::Rect, int>> PacketImage::analyzePacket(const int left, const int top, int right, int bottom){
+std::vector<std::pair<s3d::Rect, RGB>> PacketImage::analyzePacket(const int left, const int top, int right, int bottom){
 	const int packetWidth = right - left;
 	const int packetHeight = bottom - top;
 
@@ -121,15 +121,10 @@ std::vector<std::pair<s3d::Rect, int>> PacketImage::analyzePacket(const int left
 			DiceSize = mediumSize;
 			DiceColumns = 14;
 		}
-		double x = (double)top;
+		double x = (double)left;
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
-<<<<<<< HEAD
             result.push_back(std::pair<s3d::Rect, RGB>(Rect(x, y, DiceSize, DiceSize)
                 , (colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 5.0)))));
-=======
-            RGB color = colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 3.0));
-            result.push_back(std::pair<s3d::Rect, int>(Rect(x, y, DiceSize, DiceSize), color));
->>>>>>> e144cce27af9611bfb7818dff6d313706961e7bf
 		}
 	}
     return result;

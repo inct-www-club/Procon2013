@@ -13,32 +13,34 @@ void Main()
 	GridChoice appGridChoice = GridChoice();
 	Result appResult = Result();
 	SideButton appSideButton = SideButton();
+	PacketImage packet = PacketImage();
+	std::vector<std::pair<s3d::Rect, RGB>> result;
 
 	Window::SetTitle(L"TRIDE HC++");
 	Window::Resize(WindowWidth,WindowHeight);
 
 	Graphics::SetBackGround(Slategray);
+	
+	Resource::RegisterFont(L"Grid", 10);
 
 	while(System::Update())
 	{
 		if(appSideButton.AnalyzeButtonClick() == true && appGridChoice.PointRight()){
-			PacketImage packet = PacketImage(appOpenImage.image);
+			packet = PacketImage(appOpenImage.image);
 			packet.calculateCriteria(appGridChoice.RColorGrid[0].x, appGridChoice.RColorGrid[0].y,
 				appGridChoice.RColorGrid[1].x, appGridChoice.RColorGrid[1].y,
 				appGridChoice.RColorGrid[2].x, appGridChoice.RColorGrid[2].y);
 
-            std::vector<std::pair<s3d::Rect, int>> result 
-				= packet.analyzePacket(appGridChoice.Rlt.x, appGridChoice.Rlt.y, appGridChoice.Rrb.x, appGridChoice.Rrb.y);
+            result = packet.analyzePacket(appGridChoice.Rlt.x, appGridChoice.Rlt.y, appGridChoice.Rrb.x, appGridChoice.Rrb.y);
             
 			Point a, b;
 			appGridChoice.ThrowGridPoint(&a, &b);
-            appResult.Result_Set(result, a);
+            appResult.Result_Set(result, a, packet);
 		
         }
 		
 		appGridChoice.SetChoiceColor();
 		appGridChoice.ColorPosition();
-		
 
 		if(appGridChoice.ChoiceColor < 0 || appGridChoice.ChoiceColor > 2) appGridChoice.Position();
 
@@ -47,13 +49,13 @@ void Main()
 		appGridChoice.DrawBack();
 		appOpenImage.Draw();
 		appSideButton.Draw(appGridChoice);
+		appSideButton.DrawCriterion(packet.criterion1, packet.criterion2, packet.criterion5);
 
 		appGridChoice.DrawGridCoordinate();
 		appGridChoice.DrawColorGrid();
 
-		appResult.DrawPacket();
+		appResult.DrawPacket(result);
 		
 		appGridChoice.DrawGrid();
-
 	}
 }

@@ -149,13 +149,11 @@ public:
 		Line(lt, lb).draw(2, Palette::Greenyellow);
 	};
 	
-	void DrawGridCoordinate(){
-		const Font CooltF(10), CoortF(10), CoolbF(10), CoorbF(10);
-		
-		CooltF.draw(Format() + L"(" + Rlt.x + L"," + Rlt.y + L")", 2, WindowHeight-80, Palette::Yellow);
-		CoortF.draw(Format() + L"(" + Rrt.x + L"," + Rrt.y + L")", 2, WindowHeight-60, Palette::Aqua);
-		CoolbF.draw(Format() + L"(" + Rlb.x + L"," + Rlb.y + L")", 2, WindowHeight-40, Palette::Greenyellow);
-		CoorbF.draw(Format() + L"(" + Rrb.x + L"," + Rrb.y + L")", 2, WindowHeight-20, Palette::Blue);
+	void DrawGridCoordinate(){		
+		Resource::Font(L"Grid").draw(Format() + Rlt, 2, Window::Height()-80, Palette::Yellow);
+		Resource::Font(L"Grid").draw(Format() + Rrt, 2, Window::Height()-60, Palette::Aqua);
+		Resource::Font(L"Grid").draw(Format() + Rlb, 2, Window::Height()-40, Palette::Greenyellow);
+		Resource::Font(L"Grid").draw(Format() + Rrb, 2, Window::Height()-20, Palette::Blue);
 	};
 
 	bool PointRight(){
