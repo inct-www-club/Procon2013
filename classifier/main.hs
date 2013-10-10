@@ -22,8 +22,8 @@ data World = World
     }
 makeLenses ''World
 
-blackPoint :: Int -> Pattern Float
-blackPoint r = do
+point :: Int -> Pattern Float
+point r = do
     let p00 = V2 (-r) (-r)
         p10 = V2 r (-r)
         p01 = V2 (-r) r
@@ -38,18 +38,16 @@ blackPoint r = do
         ]
     return (b - w)
 
-blackPoints :: Int -> V2 Int -> Pattern [V2 Float]
-blackPoints r size@(V2 w h) = do
-    Endo t <- fmap mconcat $ spawnPatterns [execWriterT $ forM_ [r..h-r-1] $ \j -> pat i j | i <- [r..w-r-1]]
+patterns :: V2 Int -> Pattern Bool -> Pattern [V2 Float]
+patterns size@(V2 w h) pat = do
+    Endo t <- fmap mconcat
+        $ spawnPatterns [execWriterT
+            $ forM_ [r..h-r-1] $ \j -> whenM (lift $ translatePattern p pat)
+                $ tell $ Endo $ insert (On s p) | i <- [r..w-r-1]]
     return
         $ map ((/fmap fromIntegral size) . fmap fromIntegral)
         $ nubNear r
         $ map getOn $ toList $ t Empty
-    where
-        pat i j = do
-            let p = V2 i j
-            s <- lift $ translatePattern p $ blackPoint r
-            when (s < -0.1) $ tell $ Endo $ insert (On s p)
 
 analyzeMain bmp = do
     
@@ -74,8 +72,9 @@ analyzeMain bmp = do
             ps@[p, q, s, r] <- mapM look ks
             colored red $ polygonOutline ps
             
-            let resolution = V2 (60 * 9) (60 * 5)
-                radius = 12
+            let block = V2 9 5
+                resolution = return 60 * block
+                radius = 9
 
             whenM (look btn) $ do
                 let quad = Quadrangle p q r s
