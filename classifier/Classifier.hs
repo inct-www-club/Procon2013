@@ -14,7 +14,7 @@ import Control.Monad.Writer
 import Control.Monad.State
 import Control.Monad.Free
 
-import qualified Data.Array as A
+import qualified Data.Array.Unboxed as A
 import qualified Data.Array.ST as A
 
 import Control.Concurrent
@@ -24,10 +24,10 @@ import System.IO.Unsafe
 import Data.Monoid
 import Linear
 
-newtype IntegralImage a = IntegralImage (A.Array (V2 Int) a)
+newtype IntegralImage = IntegralImage (A.UArray (V2 Int) Int)
 
-integrate :: Num a => A.Array (V2 Int) a -> IntegralImage a
-integrate ar = IntegralImage $ A.runSTArray $ do
+integrate :: A.UArray (V2 Int) Int -> IntegralImage
+integrate ar = IntegralImage $ A.runSTUArray $ do
     m <- A.thaw ar
     let (V2 0 0, V2 w h) = A.bounds ar
 
@@ -43,10 +43,10 @@ integrate ar = IntegralImage $ A.runSTArray $ do
 
     return m
 
-regionBrightness :: Num a => IntegralImage a
+regionBrightness :: IntegralImage
     -> V2 Int -- Size
     -> V2 Int -- Coordinate
-    -> a
+    -> Int
 regionBrightness (IntegralImage ar) s@(V2 w h) i = m ar where
     hx = w `div` 2
     hy = h `div` 2
@@ -69,7 +69,7 @@ instance Functor PatternBase where
     fmap f (Translate t p) = Translate t (fmap f p)
     fmap f (Spawn ps g) = Spawn ps (f . g)
 
-matchBase :: V2 Int -> IntegralImage Int -> PatternBase a -> a
+matchBase :: V2 Int -> IntegralImage -> PatternBase a -> a
 matchBase p img (Rectangle s f) = f (regionBrightness img s p)
 matchBase p img (Translate t pat) = matchBase (t + p) img pat
 matchBase p img (Spawn ps cont) = cont $ unsafePerformIO $ do
@@ -86,5 +86,5 @@ brightness s@(V2 w h) = liftF $ Rectangle s ((/fromIntegral (w * h * 256)) . fro
 spawnPatterns :: [Pattern a] -> Pattern [a]
 spawnPatterns ps = liftF $ Spawn ps id
 
-runPattern :: IntegralImage Int -> Pattern a -> a
+runPattern :: IntegralImage -> Pattern a -> a
 runPattern img = iter (matchBase zero img)

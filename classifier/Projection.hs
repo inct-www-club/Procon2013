@@ -7,13 +7,13 @@ import Control.Monad
 import Control.Lens
 
 import qualified Data.Array.Repa as R
-import qualified Data.Array as A
+import qualified Data.Array.Unboxed as A
 import qualified Data.Array.ST as A
 
 data Quadrangle a = Quadrangle (V2 a) (V2 a) (V2 a) (V2 a) deriving Show
 
-crop :: R.Source r Word8 => Quadrangle Float -> V2 Int -> R.Array r R.DIM3 Word8 -> A.Array (V2 Int) Int
-crop q size@(V2 w h) ar = A.runSTArray $ do
+crop :: R.Source r Word8 => Quadrangle Float -> V2 Int -> R.Array r R.DIM3 Word8 -> A.UArray (V2 Int) Int
+crop q size@(V2 w h) ar = A.runSTUArray $ do
     let rn = (V2 0 0, V2 (w - 1) (h - 1))
     let br (V2 i j) = (`div`3) $ fromIntegral (ar R.! (R.Z R.:. j R.:. i R.:. 1))
             + fromIntegral (ar R.! (R.Z R.:. j R.:. i R.:. 2))

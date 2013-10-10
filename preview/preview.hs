@@ -23,6 +23,13 @@ die :: Picture2D m => Char -> m ()
 die 'R' = fromBitmap _die_1_png
 die 'W' = fromBitmap _die_2_png
 die 'B' = fromBitmap _die_5_png
+die '1' = fromBitmap _die_1_png
+die '2' = fromBitmap _die_2_png
+die '3' = fromBitmap _die_3_png
+die '4' = fromBitmap _die_4_png
+die '5' = fromBitmap _die_5_png
+die '6' = fromBitmap _die_6_png
+
 
 dieMedium :: Picture2D m => Char -> m ()
 dieMedium = scale (10/16) . die

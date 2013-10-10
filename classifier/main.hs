@@ -49,7 +49,7 @@ blackPoints r size@(V2 w h) = do
         pat i j = do
             let p = V2 i j
             s <- lift $ translatePattern p $ blackPoint r
-            when (s < -0.2) $ tell $ Endo $ insert (On s p)
+            when (s < -0.1) $ tell $ Endo $ insert (On s p)
 
 analyzeMain bmp = do
     
