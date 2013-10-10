@@ -102,7 +102,7 @@ std::vector<std::pair<s3d::Rect, RGB>> PacketImage::analyzePacket(const int left
 	const int packetWidth = right - left;
 	const int packetHeight = bottom - top;
 
-	double mediumSize = (double)packetHeight / 10.0;
+	double mediumSize = (double)packetHeight / 9.8/*10.0*/;
 	double largeSize  = mediumSize * 1.6; 
 
 	//result = Format() + result + L"\nlefttopX = " + lefttopX + " mSize = " + mediumSize;
@@ -125,6 +125,7 @@ std::vector<std::pair<s3d::Rect, RGB>> PacketImage::analyzePacket(const int left
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
             result.push_back(std::pair<s3d::Rect, RGB>(Rect(x, y, DiceSize, DiceSize)
                 , (colorAverage(x + (int)(DiceSize / 2), (int)(y + DiceSize / 2), (int)(DiceSize / 5.0)))));
+		}
 	}
     return result;
 
