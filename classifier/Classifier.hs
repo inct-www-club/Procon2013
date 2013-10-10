@@ -1,86 +1,90 @@
-import qualified Data.Array.Repa as R
+{-# LANGUAGE Rank2Types, FlexibleContexts, DeriveFunctor, ExistentialQuantification #-}
 
+module Classifier (IntegralImage
+    , integrate
+    , regionBrightness
+    , Pattern
+    , runPattern
+    , brightness
+    , translatePattern
+    , spawnPatterns) where
 import Control.Lens
 import Control.Comonad
+import Control.Monad.Writer
 import Control.Monad.State
-import qualified Data.Array as A
 import Control.Monad.Free
 
-newtype IntegratedImage = IntegratedImage (UArray (V2 Int) Int)
+import qualified Data.Array.Unboxed as A
+import qualified Data.Array.ST as A
 
-regionBrightness :: IntegratedImage
+import Control.Concurrent
+import Control.Concurrent.MVar
+import System.IO.Unsafe
+
+import Data.Monoid
+import Linear
+
+newtype IntegralImage = IntegralImage (A.UArray (V2 Int) Int)
+
+integrate :: A.UArray (V2 Int) Int -> IntegralImage
+integrate ar = IntegralImage $ A.runSTUArray $ do
+    m <- A.thaw ar
+    let (V2 0 0, V2 w h) = A.bounds ar
+
+    forM_ [1..w] $ \i -> forM_ [0..h] $ \j -> do
+        a <- A.readArray m (V2 (i - 1) j)
+        r <- A.readArray m (V2 i j)
+        A.writeArray m (V2 i j) $ r + a
+
+    forM_ [1..h] $ \j -> forM_ [0..w] $ \i -> do
+        b <- A.readArray m (V2 i (j - 1))
+        r <- A.readArray m (V2 i j)
+        A.writeArray m (V2 i j) $ r + b
+
+    return m
+
+regionBrightness :: IntegralImage
     -> V2 Int -- Size
     -> V2 Int -- Coordinate
-    -> Float
-regionBrightness (IntegratedImage ar) s@(V2 sx sy) i = fromIntegral (m ar) / 256 / (sx * sy) where
-    V2 hx hy = s `div` 2
+    -> Int
+regionBrightness (IntegralImage ar) s@(V2 w h) i = m ar where
+    hx = w `div` 2
+    hy = h `div` 2
     m = do
-        let v = fmap (maybe 0.5 id) . preview
+        let v = fmap (maybe 0 id) . preview
         r <- v $ ix $ i + V2 hx hy
         a <- v $ ix $ i + V2 (-hx) hy
         b <- v $ ix $ i + V2 hx (-hy)
         c <- v $ ix $ i + V2 (-hx) (-hy)
-        return $ r - a - b - c
-
-crop :: R.Source r Word8 => V2 Int -> V2 Int -> V2 Int -> V2 Int -> V2 Int -> R.Array r R.DIM3 Word8 -> 
-crop 
-
-integrate :: R.Source r Word8 => UArray (Int, Int) Int -> IntegratedImage
-integrate ar = IntegratedImage $ runSTUArray $ do
-    m <- thaw ar
-    forM_ [0..w-1] $ \i -> do
-        let x = V2 i 0
-        writeArray m x $ br x
-    
-    forM_ [0..h-1] $ \j -> do
-        let x = V2 0 j
-        writeArray m x $ br x
-    
-    forM_ [1..w-1] \i -> $ forM_ [1..h-1] $ \j -> do
-        a <- readArray m (V2 (i - 1) j)
-        b <- readArray m (V2 i (j - 1))
-        writeArray m (V2 i j) $ br i j + b + c
-
-    return m
-
-data PatternBase a = Rectangle (V2 Int) (Int -> a) | Translate (V2 Int) (Pattern a)
-
-matchBase :: V2 Int -> IntegratedImage -> PatternBase a -> a
-matchBase p img (Rectangle s f) = f (regionBrightness img s p)
-matchBase p img (Translate t pat) = match (t + p) pat img
+        return $ r - a - b + c
 
 type Pattern = Free PatternBase
 
-translate :: V2 Int -> Pattern a -> Pattern a
-translate t = hoistFree (Translate t)
+data PatternBase a = Rectangle (V2 Int) (Int -> a)
+    | Translate (V2 Int) (PatternBase a)
+    | forall r. Spawn [Pattern r] ([r] -> a)
 
-averageBrightness :: V2 Int -> Pattern Float
-averageBrightness s@(V2 w h) = liftF $ Rectangle s ((/(sx * sy * 256)) . fromIntegral)
+instance Functor PatternBase where
+    fmap f (Rectangle v g) = Rectangle v (f . g)
+    fmap f (Translate t p) = Translate t (fmap f p)
+    fmap f (Spawn ps g) = Spawn ps (f . g)
 
-match :: V2 Int -> IntegratedImage -> Pattern a -> a
-match p img = iter matchBase
+matchBase :: V2 Int -> IntegralImage -> PatternBase a -> a
+matchBase p img (Rectangle s f) = f (regionBrightness img s p)
+matchBase p img (Translate t pat) = matchBase (t + p) img pat
+matchBase p img (Spawn ps cont) = cont $ unsafePerformIO $ do
+    v <- newEmptyMVar
+    forM_ ps $ \pat -> forkIO $ putMVar v $ iter (matchBase p img) pat
+    forM ps $ const $ takeMVar v
 
-blackPoint :: Int -> Pattern Float
-blackPoint r = do
-    let p00 = V2 (-r) (-r)
-        p10 = V2 r (-r)
-        p01 = V2 (-r) r
-        p11 = V2 r r
-        w = r * 0.5
-    b <- averageBrightness $ V2 r r
-    w <- fmap ((/4) . sum) $ sequence [
-          translate (V2 (-r) 0) $ averageBrightness $ V2 w r
-        , translate (V2 r 0) $ averageBrightness $ V2 w r
-        , translate (V2 0 (-r)) $ averageBrightness $ V2 r w
-        , translate (V2 0 r) $ averageBrightness $ V2 r w
-        ]
-    return (b - w)
+translatePattern :: V2 Int -> Pattern a -> Pattern a
+translatePattern t = hoistFree (Translate t)
 
-points :: Int -> V2 Int -> Pattern (Tree Float (V2 Int))
-points r (V2 w h) = fmap (`appEndo` Bin 0.5 Empty Empty) $ execWriterT $ forM (range (V2 r r, V2 (w - r - 1) (h - r - 1))) $ \p -> do
-    s <- lift $ translate p $ blackPoint r
-    tell $ Endo $ append s p
+brightness :: V2 Int -> Pattern Float
+brightness s@(V2 w h) = liftF $ Rectangle s ((/fromIntegral (w * h * 256)) . fromIntegral)
 
-nubNear :: Num a => a -> [V2 a] -> [V2 a]
-nubNear r (v : vs) = v : nubNear r (filter ((>r^2) . qd v) vs)
-nubNear r [] = []
+spawnPatterns :: [Pattern a] -> Pattern [a]
+spawnPatterns ps = liftF $ Spawn ps id
+
+runPattern :: IntegralImage -> Pattern a -> a
+runPattern img = iter (matchBase zero img)

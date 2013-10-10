@@ -4,7 +4,6 @@
 #include<Siv3D.hpp>
 #include"BaseInfo.h"
 #include"SideButton.h"
-#include"AnalyzePacket.h"
 
 class GridChoice
 {
@@ -69,12 +68,14 @@ public:
 		else{
 			if(backrect.leftClicked){
 				lt = Mouse::Pos();
+				Rlt = RealPositionSet(lt);
 				GridSetting = true;
 			}
 			if(GridSetting){
 				if(backrect.leftPressed == false) GridSetting = false;
 				else {
 					rb = Mouse::Pos();
+					Rrb = RealPositionSet(rb);
 
 					rt = Point(rb.x, lt.y);
 					lb = Point(lt.x, rb.y);
@@ -82,10 +83,8 @@ public:
 			}
 		}
 
-		Rlt = RealPositionSet(lt);
 		Rrt = RealPositionSet(rt);
 		Rlb = RealPositionSet(lb);
-		Rrb = RealPositionSet(rb);
 	};
 
 	void ThrowGridPoint(Point *A, Point *B){
@@ -99,7 +98,8 @@ public:
 	void ColorPosition(){
 		if(backrect.leftPressed){
 			ColorGrid[ChoiceColor] = Mouse::Pos();
-			RColorGrid[ChoiceColor] = RealPositionSet(ColorGrid[ChoiceColor]);
+			RColorGrid[ChoiceColor].x = (ColorGrid[ChoiceColor].x-50)*2;
+			RColorGrid[ChoiceColor].y = ColorGrid[ChoiceColor].y*2;
 			//leftPress = true;
 		}
 	};
@@ -149,11 +149,13 @@ public:
 		Line(lt, lb).draw(2, Palette::Greenyellow);
 	};
 	
-	void DrawGridCoordinate(){		
-		Resource::Font(L"Grid").draw(Format() + Rlt, 2, Window::Height()-80, Palette::Yellow);
-		Resource::Font(L"Grid").draw(Format() + Rrt, 2, Window::Height()-60, Palette::Aqua);
-		Resource::Font(L"Grid").draw(Format() + Rlb, 2, Window::Height()-40, Palette::Greenyellow);
-		Resource::Font(L"Grid").draw(Format() + Rrb, 2, Window::Height()-20, Palette::Blue);
+	void DrawGridCoordinate(){
+		const Font CooltF(10), CoortF(10), CoolbF(10), CoorbF(10);
+		
+		CooltF.draw(Format() + L"(" + Rlt.x + L"," + Rlt.y + L")", 2, WindowHeight-80, Palette::Yellow);
+		CoortF.draw(Format() + L"(" + Rrt.x + L"," + Rrt.y + L")", 2, WindowHeight-60, Palette::Aqua);
+		CoolbF.draw(Format() + L"(" + Rlb.x + L"," + Rlb.y + L")", 2, WindowHeight-40, Palette::Greenyellow);
+		CoorbF.draw(Format() + L"(" + Rrb.x + L"," + Rrb.y + L")", 2, WindowHeight-20, Palette::Blue);
 	};
 
 	bool PointRight(){
