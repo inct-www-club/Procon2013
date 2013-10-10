@@ -13,9 +13,18 @@ class RGB{
         float Distance(RGB x);
 };
 
+class OneDicePoint{
+	public:
+		int topLeftX, topLeftY;
+		int bottomRightX, bottomRightY;
+		int diceRool;
+		OneDicePoint(int tlX, int tlY, int brX, int brY);
+		OneDicePoint(double tlX, double tlY, double brX, double brY);
+		OneDicePoint *next;
+};
+
 typedef std::pair< int, int>  Coord;
 
-//パケチE��画像関連の惁E��はここに詰め込む。変数追加の余地あり、E
 class PacketImage{
 	public:
 		Image image;
@@ -30,7 +39,7 @@ class PacketImage{
         void calculateCriteria(int redX, int redY, int whiteX, int whiteY, int blackX, int blackY);
 		RGB colorAverage(int xCoordinate, int yCoordinate, int diceSize);
 		int decideRoll(RGB average);
-		std::vector<std::pair<s3d::Rect, RGB>> analyzePacket(const int left, const int top, const int right, const int bottom);
+		OneDicePoint* analyzePacket(const int left, const int top, const int right, const int bottom);
 };
 
 #endif
