@@ -16,6 +16,8 @@ void Main()
 	PacketImage packet = PacketImage();
 	std::vector<std::pair<s3d::Rect, RGB>> result;
 
+	OneDicePoint *resultFirst = NULL;
+
 	Window::SetTitle(L"TRIDE HC++");
 	Window::Resize(WindowWidth,WindowHeight);
 
@@ -31,11 +33,11 @@ void Main()
 				appGridChoice.RColorGrid[1].x, appGridChoice.RColorGrid[1].y,
 				appGridChoice.RColorGrid[2].x, appGridChoice.RColorGrid[2].y);
 
-            result = packet.analyzePacket(appGridChoice.Rlt.x, appGridChoice.Rlt.y, appGridChoice.Rrb.x, appGridChoice.Rrb.y);
+			resultFirst = packet.analyzePacket(appGridChoice.Rlt.x, appGridChoice.Rlt.y, appGridChoice.Rrb.x, appGridChoice.Rrb.y);
             
-			Point a, b;
-			appGridChoice.ThrowGridPoint(&a, &b);
-            appResult.Result_Set(result, a, packet);
+			//Point a, b;
+			//appGridChoice.ThrowGridPoint(&a, &b);
+            //appResult.Result_Set(result, a, packet);
 		
         }
 		
@@ -54,8 +56,11 @@ void Main()
 		appGridChoice.DrawGridCoordinate();
 		appGridChoice.DrawColorGrid();
 
-		appResult.DrawPacket(result);
-		
+		//appResult.DrawPacket(result);
+		for(OneDicePoint *now = resultFirst; now != NULL; now = now->next){
+			now->rect->drawFrame(2, 2, Palette::Red);
+		}
+
 		appGridChoice.DrawGrid();
 	}
 }

@@ -44,6 +44,10 @@ OneDicePoint::OneDicePoint(double tlX, double tlY, double brX, double brY){
 	bottomRightX = (int)brX;
 }
 
+void OneDicePoint::setRect(void){
+	rect = new Rect(topLeftX/2 + 50, topLeftY/2, (bottomRightX - topLeftX)/2, (bottomRightY - topLeftY)/2);
+}
+
 PacketImage::PacketImage(void){
 	//image = Dialog::OpenImage();
     calculateCriteria();
@@ -121,7 +125,8 @@ OneDicePoint* PacketImage::analyzePacket(const int left, const int top, int righ
 	const int packetWidth = right - left;
 	const int packetHeight = bottom - top;
 
-	OneDicePoint *first=NULL, *now;
+	OneDicePoint *first=NULL;
+	OneDicePoint *now = NULL;
 
 	double largeSize  = (double)packetWidth / 9.0;
 	double mediumSize = largeSize/1.6;
@@ -144,14 +149,22 @@ OneDicePoint* PacketImage::analyzePacket(const int left, const int top, int righ
 		double x = (double)left;
 
 		for(int j=0; j<DiceColumns; j++, x+=DiceSize){
-			now = new OneDicePoint(x, y, x+DiceSize, y+DiceSize);
-			if(first == NULL){
-				first = now;
+			if(now != NULL){
+				now->next = new OneDicePoint(x, y, x+DiceSize, y+DiceSize);
+				now->next->before = now;
+				now = now->next;
 			}
-			now->diceRool = decideRoll(colorAverage((int)(x + DiceSize/2.0), (int)(y + DiceSize/2.0), 8));
+			else{
+				now = new OneDicePoint(x, y, x+DiceSize, y+DiceSize);
+				now->before = NULL;
+			}
+			now->setRect();
 		}
 	}
 
-    return first;
+	while(now->before != NULL){
+		now = now->before;
+	}
+    return now;
 
 }

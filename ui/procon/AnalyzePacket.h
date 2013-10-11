@@ -18,9 +18,11 @@ class OneDicePoint{
 		int topLeftX, topLeftY;
 		int bottomRightX, bottomRightY;
 		int diceRool;
+		Rect *rect;
 		OneDicePoint(int tlX, int tlY, int brX, int brY);
 		OneDicePoint(double tlX, double tlY, double brX, double brY);
-		OneDicePoint *next;
+		void setRect(void);
+		OneDicePoint *before, *next;
 };
 
 typedef std::pair< int, int>  Coord;
@@ -40,6 +42,7 @@ class PacketImage{
 		RGB colorAverage(int xCoordinate, int yCoordinate, int diceSize);
 		int decideRoll(RGB average);
 		OneDicePoint* analyzePacket(const int left, const int top, const int right, const int bottom);
+
 };
 
 #endif
