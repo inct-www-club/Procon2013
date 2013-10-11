@@ -61,7 +61,8 @@ void PacketImage::calculateCriteria(int redX, int redY, int whiteX, int whiteY, 
     criterion1 = colorAverage(redX, redY, r);
     criterion2 = colorAverage(whiteX, whiteY, r);
     criterion5 = colorAverage(blackX, blackY, r);
-	criterion5 = RGB((criterion2.r + criterion5.r)/2, (criterion2.g + criterion5.g)/2, ((criterion2.b + criterion5.b)/2));
+	//criterion5 = RGB((criterion2.r + criterion5.r)/2 ,(criterion2.g + criterion5.g)/2 ,(criterion2.b + criterion5.b)/2);
+	criterion5 = RGB((criterion2.r/3 + criterion5.r*2/3), (criterion2.g/3 + criterion5.g*2/3), ((criterion2.b/3 + criterion5.b*2/3)));
 }
 
 RGB PacketImage::colorAverage(int tx, int ty, int radius){

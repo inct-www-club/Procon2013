@@ -87,7 +87,19 @@ public:
 					int xsize = BigDice[i][j].RightBottom.x - BigDice[i][j].LeftTop.x,
 						ysize = BigDice[i][j].RightBottom.y - BigDice[i][j].LeftTop.y;
 
-					Rect(BigDice[i][j].LeftTop.x, BigDice[i][j].LeftTop.y, xsize, ysize).drawFrame(1,1,Color(i*30,j*30,(i+j)*20));
+					Rect tmpRext = Rect(BigDice[i][j].LeftTop.x, BigDice[i][j].LeftTop.y, xsize, ysize);
+					tmpRext.drawFrame(1,1,Color(i*30,j*30,(i+j)*20));
+					if(tmpRext.rightClicked){
+						if(BigDice[i][j].ChangedRoll == 1){
+							BigDice[i][j].ChangedRoll = 2;
+						}
+						else if(BigDice[i][j].ChangedRoll == 2){
+							BigDice[i][j].ChangedRoll = 5;
+						}
+						else{
+							BigDice[i][j].ChangedRoll = 1;
+						}
+					}
 						
 					Circle(Point(BigDice[i][j].LeftTop.x + xsize/2,  BigDice[i][j].LeftTop.y + ysize/2), 5).draw(Palette::Aliceblue);
 					Circle(Point(BigDice[i][j].LeftTop.x + xsize/2,  BigDice[i][j].LeftTop.y + ysize/2), 4)
@@ -101,8 +113,22 @@ public:
 					int xsize = SmallDice[i][j].RightBottom.x - SmallDice[i][j].LeftTop.x,
 						ysize = SmallDice[i][j].RightBottom.y - SmallDice[i][j].LeftTop.y;
 
-					Rect(SmallDice[i][j].LeftTop.x, SmallDice[i][j].LeftTop.y, xsize, ysize).drawFrame(1,1,Palette::Chocolate);
+					//Rect(SmallDice[i][j].LeftTop.x, SmallDice[i][j].LeftTop.y, xsize, ysize).drawFrame(1,1,Palette::Chocolate);
 						
+					Rect tmpRext = Rect(SmallDice[i][j].LeftTop.x, SmallDice[i][j].LeftTop.y, xsize, ysize);
+					tmpRext.drawFrame(1,1,Color(i*30,j*30,(i+j)*20));
+					if(tmpRext.rightClicked){
+						if(SmallDice[i][j].ChangedRoll == 1){
+							SmallDice[i][j].ChangedRoll = 2;
+						}
+						else if(SmallDice[i][j].ChangedRoll == 2){
+							SmallDice[i][j].ChangedRoll = 5;
+						}
+						else{
+							SmallDice[i][j].ChangedRoll = 1;
+						}
+					}
+
 					Circle(Point(SmallDice[i][j].LeftTop.x + xsize/2,  SmallDice[i][j].LeftTop.y + ysize/2), 5).draw(Palette::Aliceblue);
 					Circle(Point(SmallDice[i][j].LeftTop.x + xsize/2,  SmallDice[i][j].LeftTop.y + ysize/2), 4)
 						.draw(Color(result[count].second.r, result[count].second.g, result[count].second.b));
