@@ -51,7 +51,7 @@ regionBrightness (IntegralImage ar) s@(V2 w h) i = m ar where
     hw = w `div` 2
     hh = h `div` 2
     m = do
-        let v = fmap (maybe 128 id) . preview
+        let v = fmap (maybe 0 id) . preview
         r <- v $ ix $ i + V2 (-hw) (-hh)
         a <- v $ ix $ i + V2 hw (-hh)
         b <- v $ ix $ i + V2 (-hw) hh
