@@ -25,8 +25,8 @@ die 'R' = fromBitmap _die_1_png
 die 'W' = fromBitmap _die_2_png
 die 'B' = fromBitmap _die_5_png
 die '1' = fromBitmap _die_1_png
-die '2' = fromBitmap _die_2_png
-die '3' = colored (Color 1.0 1.0 0.7 1.0) $ fromBitmap _die_3_png
+die '2' = colored (Color 1.0 0.8 0.8 1.0) $ fromBitmap _die_2_png
+die '3' = colored (Color 1.0 1.0 0.5 1.0) $ fromBitmap _die_3_png
 die '4' = colored (Color 0.8 1.0 0.8 1.0) $ fromBitmap _die_4_png
 die '5' = colored (Color 0.8 0.8 1.0 1.0) $ fromBitmap _die_5_png
 die '6' = fromBitmap _die_6_png
@@ -114,7 +114,7 @@ previewMain f window str = do
         mpkt <- preuse $ packets . ix i
         case mpkt of
             Just pkt -> translate (V2 120 480) $ colored red $ text font 60 $ show
-                $ f (i * 73 + length (_dice pkt))
+                $ f (i * 45 + length (_dice pkt))
             Nothing -> return ()
 
         whenM (keySpecial KeyEsc) quit `asTypeOf` return ()

@@ -69,13 +69,14 @@ instance Functor PatternBase where
     fmap f (Translate t p) = Translate t (fmap f p)
     fmap f (Spawn ps g) = Spawn ps (f . g)
 
-matchBase :: V2 Int -> IntegralImage -> PatternBase a -> a
+matchBase :: V2 Int -> IntegralImage -> PatternBase (IO a) -> IO a
 matchBase p img (Rectangle s f) = f (regionBrightness img s p)
 matchBase p img (Translate t pat) = matchBase (t + p) img pat
-matchBase p img (Spawn ps cont) = cont $ unsafePerformIO $ do
+matchBase p img (Spawn ps cont) = do
     v <- newEmptyMVar
-    forM_ ps $ \pat -> forkIO $ putMVar v $ iter (matchBase p img) pat
-    forM ps $ const $ takeMVar v
+    forM_ ps $ \pat -> forkIO $ iterM (matchBase p img) pat >>= putMVar v
+    rs <- forM ps $ const $ takeMVar v
+    cont rs
 
 translatePattern :: V2 Int -> Pattern a -> Pattern a
 translatePattern t = hoistFree (Translate t)
@@ -86,5 +87,5 @@ brightness s@(V2 w h) = liftF $ Rectangle s ((/fromIntegral (w * h * 256)) . fro
 spawnPatterns :: [Pattern a] -> Pattern [a]
 spawnPatterns ps = liftF $ Spawn ps id
 
-runPattern :: IntegralImage -> Pattern a -> a
-runPattern img = iter (matchBase zero img)
+runPattern :: IntegralImage -> Pattern a -> IO a
+runPattern img = iterM (matchBase zero img)

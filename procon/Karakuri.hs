@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types, ScopedTypeVariables #-}
+{-# LANGUAGE Rank2Types, ScopedTypeVariables, LambdaCase #-}
 
 module Karakuri
     ( draggablePoint
@@ -10,6 +10,7 @@ import Graphics.UI.FreeGame
 import Control.Monad.Butai
 import Control.Lens
 import Control.Monad.State
+import Control.Concurrent.MVar
 
 instance (Monad m, Picture2D m) => Picture2D (ButaiT m) where
     fromBitmap = lift . fromBitmap
@@ -38,19 +39,24 @@ instance (Monad m, Keyboard m) => Keyboard (ButaiT m) where
     keyChar = lift . keyChar
     keySpecial = lift . keySpecial
 
-draggablePoint :: (Monad m, Figure2D m, Mouse m) => Float -> Vec2 -> Karakuri m Vec2
-draggablePoint size _p = fst <$> stateful go (_p, Nothing) where
+draggablePoint :: (Monad m, Figure2D m, Mouse m, MonadIO m) => Float -> MVar Vec2 -> Karakuri m ()
+draggablePoint size mv = () <$ stateful go Nothing where
     size' = size / 2
     rect = BoundingBox (-size') (-size') size' size'
     go = do
-        (q, s) <- get
         p <- mousePosition
+        q <- liftIO $ readMVar mv
         colored (blue & _Alpha .~ 0.5) $ translate q $ polygon $ rect ^.. _Corners
-        case s of
-            Nothing -> whenM mouseButtonL $ when (inBoundingBox (p - q) rect) $ put (q, Just (q - p))
+        get >>= \case
+            Nothing -> whenM mouseButtonL $ when (inBoundingBox (p - q) rect) $ do
+                put $ Just (q - p)
+                liftIO $ swapMVar mv q
+                return ()
             Just r -> do
-                unlessM mouseButtonL $ _2 .= Nothing
-                _1 .= p + r
+                unlessM mouseButtonL $ put Nothing
+                liftIO $ swapMVar mv (p + r)
+                return ()
+
 
 slider :: (Monad m, Figure2D m, Mouse m) => Float -> Float -> Float -> Float -> Karakuri m Float
 slider width vmin vmax val = fmap ((vmin +) . (*r) . (/width) . (+width') . fst)

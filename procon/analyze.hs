@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase, TemplateHaskell, BangPatterns, FlexibleContexts #-}
+{-# LANGUAGE LambdaCase, TemplateHaskell, BangPatterns, FlexibleContexts, MultiWayIf #-}
 
 import Graphics.UI.FreeGame
 import Data.Karakuri
@@ -26,6 +26,7 @@ import System.IO
 import Network.HTTP.Conduit
 import qualified Data.ByteString as B
 import Network
+import System.Directory
 {-
 import Data.Aeson (Value)
 import Data.Aeson.Lens
@@ -34,6 +35,7 @@ import Data.Aeson.Lens
 data World = World
     { _theGrid :: (Int, Int)
     , _theThreads :: [ThreadId]
+    , _mouseRight :: Bool
     }
 makeLenses ''World
 
@@ -67,7 +69,7 @@ nubNear [] = []
 
 patterns :: Int -> V2 Int -> Pattern (Float, Int) -> Pattern [V2 Float]
 patterns r size@(V2 w h) pat = do
-    Endo t <- execWriterT $ forM_ [r,r+2..h-r-1] $ \j -> forM_  [r,r+2..w-r-1] $ \i -> do
+    Endo t <- execWriterT $ forM_ [r,r+3..h-r-1] $ \j -> forM_  [r,r+3..w-r-1] $ \i -> do
         (s, size) <- lift $ translatePattern (V2 i j) pat
         when (s < 0) $ tell $ Endo $ insert (On s (V2 i j, size))
     return
@@ -106,12 +108,17 @@ analyzeMain bmp = runButaiT $ do
 
     scale (return sc) $ do
 
-        ks <- sequence
-            [register $ draggablePoint (12/sc) (V2 200 200)
-            , register $ draggablePoint (12/sc) (V2 1000 200)
-            , register $ draggablePoint (12/sc) (V2 1000 1000)
-            , register $ draggablePoint (12/sc) (V2 200 1000)
-            ]
+        vp <- liftIO $ newMVar (V2 200 200)
+        vq <- liftIO $ newMVar (V2 1500 200)
+        vr <- liftIO $ newMVar (V2 200 1000)
+        vs <- liftIO $ newMVar (V2 1500 1000)
+
+
+        register $ draggablePoint (12/sc) vp
+        register $ draggablePoint (12/sc) vq
+        register $ draggablePoint (12/sc) vr
+        register $ draggablePoint (12/sc) vs
+
 
         results <- lift $ lift $ embedIO $ newMVar Empty
 
@@ -131,7 +138,11 @@ analyzeMain bmp = runButaiT $ do
 
             (rows, cols) <- uses theGrid (each %~ fromIntegral)
  
-            [p, q, s, r] <- mapM look ks
+            p <- liftIO $ readMVar vp
+            q <- liftIO $ readMVar vq
+            r <- liftIO $ readMVar vr
+            s <- liftIO $ readMVar vs
+
             let proj = getProjection $ Quadrangle p q r s
 
             qs <- lift $ lift $ fmap concat $ forM [0..rows - 1] $ \r -> forM [0..cols - 1] $ \c -> do
@@ -156,43 +167,59 @@ analyzeMain bmp = runButaiT $ do
                     let proj' = getProjection q
                     let img = integrate $ crop proj' (return resolution) (view _BitmapArray bmp)
                     let s = floor $ fromIntegral resolution * size
-                    let !cs = map (project proj') $ runPattern img (dice threshold s resolution)
+                    !cs <- map (project proj') <$> runPattern img (dice threshold s resolution)
                     rs <- takeMVar results
                     putMVar results $ insert (On p cs) rs
 
                 theThreads .= ts
 
-            vs <- lift $ lift $ embedIO $ toList <$> readMVar results
+            vecs <- lift $ lift $ embedIO $ toList <$> readMVar results
             whenM (look btnWrite) $ lift $ lift $ embedIO $ do
-                appendFile "out.txt" $ concat [show (length v) | On _ v <- vs] ++ "\n"
-                putStrLn ""
-                hFlush stdout
+                let str = concat [show (length v) | On _ v <- vecs] ++ "\n"
+                appendFile "out.txt" str
+                putStrLn str
+
+            whenM (notF (use mouseRight) <&=> mouseButtonR) $ do
+                pos <- mousePosition
+                let dp = qd pos p
+                    dq = qd pos q
+                    dr = qd pos r
+                    ds = qd pos s
+                    dmin = minimum [dp, dq, dr, ds]
+                liftIO $ if  | dp == dmin -> swapMVar vp pos
+                    | dq == dmin -> swapMVar vq pos
+                    | dr == dmin -> swapMVar vr pos
+                    | ds == dmin -> swapMVar vs pos
+                return ()
+                
+            mouseRight <~ mouseButtonR
 
             lift $ lift $ do
                 thickness 2 $ colored red $ polygonOutline [p, q, s, r]
 
-                forM_ (concatMap getOn vs) $ \v -> translate v $ colored (yellow & _Alpha .~ 0.5) $ circle 9
+                forM_ (concatMap getOn vecs) $ \v -> translate v $ colored (yellow & _Alpha .~ 0.7) $ circle 7
 
                 tick
 
 main = getArgs >>= \case
     ("remote" : n : _) -> do
-        let booth = "10"
+        let booth = "11"
         let name = booth ++ "_" ++ n ++ ".jpg"
-        let url = "http://192.168.2.2/image/" ++ name
-        putStrLn url
-        withSocketsDo $ simpleHttp url >>= B.writeFile name . view strict
+        unlessM (doesFileExist name) $ do
+            let url = "http://192.168.2.2/image/" ++ name
+            putStrLn url
+            withSocketsDo $ simpleHttp url >>= B.writeFile name . view strict
         bmp <- loadBitmapFromFile name
         font <- loadFont "VL-PGothic-Regular.ttf"
         -- Just setting <- "settings.json" ^!? act readFile . _JSON
         -- give setting $ 
         give font $ runGame def { _windowRegion = BoundingBox 0 0 800 600, _windowTitle = "TRIDE-HC++" }
-            $ evalStateT (analyzeMain bmp) (World (5, 9) [])         
+            $ evalStateT (analyzeMain bmp) (World (5, 9) [] False)         
     ("local" : path : _) -> do
         bmp <- loadBitmapFromFile path
         font <- loadFont "VL-PGothic-Regular.ttf"
         -- Just setting <- "settings.json" ^!? act readFile . _JSON
         -- give setting $ 
         give font $ runGame def { _windowRegion = BoundingBox 0 0 800 600, _windowTitle = "TRIDE-HC++" }
-            $ evalStateT (analyzeMain bmp) (World (5, 9) []) 
+            $ evalStateT (analyzeMain bmp) (World (5, 9) [] False) 
     _ -> fail "classifier [path]"

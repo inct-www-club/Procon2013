@@ -54,7 +54,7 @@ main = getArgs >>= \case
             xs <- getLine
             putStrLn $ transcode # map digitToInt xs
     ("fetch":_) -> withSocketsDo $ forM_ [(1::Int)..] $ \i -> do
-        let ident = "09"
+        let ident = "11"
         let name = ident ++ "_" ++ printf "%03d" i ++ ".jpg"
         let url = "http://192.168.2.2/image/" ++ name
         putStrLn url
